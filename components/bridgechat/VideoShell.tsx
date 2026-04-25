@@ -14,6 +14,7 @@ import {
   RefreshCcw,
   SendHorizonal,
   Sparkles,
+  X,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -33,33 +34,61 @@ type InteractiveStep =
   | "ready-to-send"
   | "waiting-reply"
   | "ready-final-reply"
+  | "reply-select"
+  | "reply-selected"
+  | "waiting-ai-hint"
   | "done";
 
-function VideoMessageBubble({ message }: { message: VideoMessage }) {
+function VideoMessageBubble({
+  message,
+  selectable = false,
+  selected = false,
+  onSelect,
+}: {
+  message: VideoMessage;
+  selectable?: boolean;
+  selected?: boolean;
+  onSelect?: () => void;
+}) {
   const isSelf = message.sender === "self";
 
   return (
     <div className={`flex ${isSelf ? "justify-end" : "justify-start"}`}>
       <div className={`max-w-[78%] ${isSelf ? "items-end" : "items-start"}`}>
-        <div
-          className={`rounded-[24px] px-4 py-3 text-sm leading-6 shadow-sm ${
-            isSelf
-              ? "rounded-br-md bg-[var(--accent-strong)] text-white"
-              : "rounded-bl-md border border-[var(--border-strong)] bg-white text-slate-700"
-          }`}
+        <button
+          type="button"
+          onClick={onSelect}
+          disabled={!selectable}
+          className={`block w-full text-left ${
+            selectable ? "cursor-pointer" : "cursor-default"
+          } ${selected ? "rounded-[28px]" : ""}`}
         >
-          <div>{message.text}</div>
-          {message.media ? (
-            <div className="mt-3 overflow-hidden rounded-2xl border border-black/5 bg-slate-50">
-              <img
-                src={message.media.src}
-                alt={message.media.alt}
-                className="h-40 w-full object-cover"
-              />
-              <div className="px-3 py-2 text-xs text-slate-500">{message.media.caption}</div>
-            </div>
-          ) : null}
-        </div>
+          <div
+            className={`rounded-[24px] px-4 py-3 text-sm leading-6 shadow-sm transition ${
+              isSelf
+                ? "rounded-br-md bg-[var(--accent-strong)] text-white"
+                : "rounded-bl-md border border-[var(--border-strong)] bg-white text-slate-700"
+            } ${
+              selected
+                ? "border-sky-300 bg-[linear-gradient(180deg,rgba(246,252,255,0.98),rgba(235,247,255,0.98))] shadow-[0_14px_28px_rgba(56,189,248,0.18)]"
+                : selectable
+                  ? "hover:border-sky-200/80 hover:bg-sky-50/55"
+                  : ""
+            }`}
+          >
+            <div>{message.text}</div>
+            {message.media ? (
+              <div className="mt-3 overflow-hidden rounded-2xl border border-black/5 bg-slate-50">
+                <img
+                  src={message.media.src}
+                  alt={message.media.alt}
+                  className="h-40 w-full object-cover"
+                />
+                <div className="px-3 py-2 text-xs text-slate-500">{message.media.caption}</div>
+              </div>
+            ) : null}
+          </div>
+        </button>
         <div className={`mt-2 text-xs text-slate-400 ${isSelf ? "text-right" : "text-left"}`}>
           {isSelf ? "我" : "对方"} · {message.sentAt}
         </div>
@@ -121,10 +150,13 @@ export function VideoShell() {
   );
   const [interactiveStep, setInteractiveStep] =
     useState<InteractiveStep>("waiting-hint");
+  const [selectedMessageId, setSelectedMessageId] = useState<string | null>(null);
   const timersRef = useRef<number[]>([]);
 
   const script = videoScripts[scene];
-  const isInteractiveScene = scene === "shared-interest";
+  const isScene1Interactive = scene === "shared-interest";
+  const isScene2Interactive = scene === "ai-guidance";
+  const isInteractiveScene = isScene1Interactive || isScene2Interactive;
   const maxBeat = script.beatCaptions.length - 1;
 
   const visibleMessages = useMemo(() => {
@@ -161,7 +193,10 @@ export function VideoShell() {
     setBeat(0);
     setDraft("");
     setSceneMessages(targetScript.openerMessages);
-    setInteractiveStep("waiting-hint");
+    setSelectedMessageId(null);
+    setInteractiveStep(
+      targetScene === "shared-interest" ? "waiting-hint" : "reply-select",
+    );
 
     if (nextScene) {
       setScene(nextScene);
@@ -240,7 +275,7 @@ export function VideoShell() {
 
   useEffect(() => {
     if (
-      !isInteractiveScene ||
+      !isScene1Interactive ||
       sceneMessages.length > script.openerMessages.length
     ) {
       return;
@@ -268,10 +303,40 @@ export function VideoShell() {
     draft,
     scene,
     assistantMode,
-    isInteractiveScene,
+    isScene1Interactive,
     sceneMessages.length,
     script.openerMessages.length,
   ]);
+
+  function selectScene2Message(messageId: string) {
+    if (!isScene2Interactive || interactiveStep !== "reply-select") {
+      return;
+    }
+    setSelectedMessageId(messageId);
+    setHint(null);
+    setDraft("");
+    setInteractiveStep("reply-selected");
+  }
+
+  function startScene2Reply() {
+    if (!isScene2Interactive || interactiveStep !== "reply-selected") {
+      return;
+    }
+
+    setHint(null);
+    setDraft("");
+    setInteractiveStep("waiting-ai-hint");
+
+    const timer = window.setTimeout(async () => {
+      await resolveHint(script.sentMessage.text);
+      setInteractiveStep("ready-to-send");
+    }, 8000);
+    timersRef.current.push(timer);
+  }
+
+  function clearScene2ReplyContext() {
+    setSelectedMessageId(null);
+  }
 
   async function goToBeat(nextBeat: number) {
     const clampedBeat = Math.max(0, Math.min(nextBeat, maxBeat));
@@ -322,7 +387,7 @@ export function VideoShell() {
       return;
     }
 
-    if (interactiveStep === "ready-to-send") {
+    if (isScene1Interactive && interactiveStep === "ready-to-send") {
       setSceneMessages((current) => [
         ...current,
         {
@@ -344,7 +409,7 @@ export function VideoShell() {
       return;
     }
 
-    if (interactiveStep === "ready-final-reply") {
+    if (isScene1Interactive && interactiveStep === "ready-final-reply") {
       setSceneMessages((current) => [
         ...current,
         {
@@ -356,11 +421,35 @@ export function VideoShell() {
       ]);
       setDraft("");
       setInteractiveStep("done");
+      return;
+    }
+
+    if (isScene2Interactive && interactiveStep === "ready-to-send") {
+      setSceneMessages((current) => [
+        ...current,
+        {
+          id: `scene2-user-${Date.now()}`,
+          sender: "self",
+          text,
+          sentAt: script.sentMessage.sentAt,
+        },
+      ]);
+      setDraft("");
+      setHint(null);
+      setSelectedMessageId(null);
+      setInteractiveStep("waiting-reply");
+
+      const timer = window.setTimeout(() => {
+        setSceneMessages((current) => [...current, ...script.replyMessages.slice(0, 1)]);
+        setInteractiveStep("done");
+      }, 2000);
+      timersRef.current.push(timer);
     }
   }
 
   const interactiveCaption =
-    !draft.trim() && sceneMessages.length === 0
+    isScene1Interactive
+      ? !draft.trim() && sceneMessages.length === script.openerMessages.length
       ? "主角先自己开始输入；只有开始输入后停顿 3 秒，AI 才会弹出提示。"
       : interactiveStep === "waiting-hint"
         ? "主角正在犹豫，若继续停顿 3 秒没有更多操作，AI 就会自动给出提示。"
@@ -370,7 +459,18 @@ export function VideoShell() {
           ? "消息已经发出，等待对方回复。"
           : interactiveStep === "ready-final-reply"
             ? "对方回复已经出现，现在主角可以自己打出“哇！好乖！”。"
-            : "这一幕已经完成，可以重置重新拍。";
+            : "这一幕已经完成，可以重置重新拍。"
+      : interactiveStep === "reply-select"
+        ? "先选中对方那条 DDL 吐槽消息，让界面进入回复状态。"
+        : interactiveStep === "reply-selected"
+          ? "回复按钮已经出现，现在由主角自己点一下回复。"
+          : interactiveStep === "waiting-ai-hint"
+            ? "从点下回复开始计时，约 8 秒后 AI 会给出切入提示。"
+            : interactiveStep === "ready-to-send"
+              ? "AI 提示已经出现，现在主角可以自己输入并发送。"
+              : interactiveStep === "waiting-reply"
+                ? "消息已经发出，等待对方接住这个话题。"
+                : "这一幕已经完成，可以重置重新拍。";
 
   return (
     <main className="relative min-h-screen overflow-hidden bg-[radial-gradient(circle_at_top_left,rgba(160,231,216,0.34),transparent_32%),radial-gradient(circle_at_bottom_right,rgba(125,146,230,0.22),transparent_28%)] px-4 py-6 md:px-6 lg:px-8">
@@ -465,7 +565,9 @@ export function VideoShell() {
 
                   {isInteractiveScene ? (
                     <div className="rounded-2xl border border-[var(--border-strong)] bg-[var(--panel-muted)] px-4 py-3 text-sm leading-6 text-slate-600">
-                      这一幕由主角自己推进：等待提示出现，然后自己发送、自己补最后一句。
+                      {isScene1Interactive
+                        ? "这一幕由主角自己推进：等待提示出现，然后自己发送、自己补最后一句。"
+                        : "这一幕由主角自己推进：先选中消息并点回复，等待提示出现，再自己输入并发送。"}
                     </div>
                   ) : (
                     <>
@@ -517,6 +619,12 @@ export function VideoShell() {
                               ? "等待回复"
                               : interactiveStep === "ready-final-reply"
                                 ? "准备收尾"
+                                : interactiveStep === "reply-select"
+                                  ? "等待选中"
+                                  : interactiveStep === "reply-selected"
+                                    ? "准备回复"
+                                    : interactiveStep === "waiting-ai-hint"
+                                      ? "等待提示"
                                 : "完成"
                       }`
                     : `Beat ${beat + 1} / ${script.beatCaptions.length}`}
@@ -565,7 +673,39 @@ export function VideoShell() {
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.24 }}
                       >
-                        <VideoMessageBubble message={message} />
+                        <div
+                          className={
+                            isScene2Interactive &&
+                            selectedMessageId === message.id &&
+                            interactiveStep === "reply-selected"
+                              ? "relative pb-12"
+                              : ""
+                          }
+                        >
+                          <VideoMessageBubble
+                            message={message}
+                            selectable={
+                              isScene2Interactive &&
+                              interactiveStep === "reply-select" &&
+                              message.id === script.openerMessages[0]?.id
+                            }
+                            selected={selectedMessageId === message.id}
+                            onSelect={() => selectScene2Message(message.id)}
+                          />
+                          {isScene2Interactive &&
+                          selectedMessageId === message.id &&
+                          interactiveStep === "reply-selected" ? (
+                            <div className="absolute bottom-0 left-3">
+                              <button
+                                type="button"
+                                onClick={startScene2Reply}
+                                className="inline-flex items-center rounded-full border border-sky-200 bg-white px-4 py-2 text-sm font-medium text-sky-900 shadow-[0_10px_24px_rgba(15,23,42,0.12)] transition hover:bg-sky-50"
+                              >
+                                回复
+                              </button>
+                            </div>
+                          ) : null}
+                        </div>
                       </motion.div>
                     ))}
                   </div>
@@ -576,15 +716,48 @@ export function VideoShell() {
 
                   <div className="mt-auto border-t border-slate-200/80 bg-white/88 px-4 py-4">
                     <div className="rounded-[28px] border border-slate-200/90 bg-[#f7f9fb] px-4 py-4 shadow-inner">
+                      {isScene2Interactive &&
+                      selectedMessageId &&
+                      interactiveStep !== "reply-selected" &&
+                      interactiveStep !== "reply-select" ? (
+                        <div className="mb-3 flex items-start justify-between gap-3 rounded-2xl border border-slate-200/90 bg-white/92 px-4 py-3 text-sm leading-7 text-slate-500 shadow-[0_8px_22px_rgba(15,23,42,0.05)]">
+                          <p className="min-w-0">
+                            回复：
+                            {sceneMessages.find((message) => message.id === selectedMessageId)?.text}
+                          </p>
+                          <button
+                            type="button"
+                            onClick={clearScene2ReplyContext}
+                            className="mt-0.5 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-slate-400 transition hover:bg-slate-100 hover:text-slate-600"
+                            aria-label="关闭回复引用"
+                          >
+                            <X className="h-4 w-4" />
+                          </button>
+                        </div>
+                      ) : null}
                       <textarea
                         value={draft}
                         onChange={(event) => {
                           setDraft(event.target.value);
                         }}
                         placeholder={
-                          isInteractiveScene
+                          isScene1Interactive
                             ? "发一条消息..."
-                            : "等待下一步镜头…"
+                            : isScene2Interactive
+                              ? interactiveStep === "waiting-ai-hint" ||
+                                interactiveStep === "ready-to-send" ||
+                                interactiveStep === "waiting-reply" ||
+                                interactiveStep === "done"
+                                ? "发一条消息..."
+                                : " "
+                              : "等待下一步镜头…"
+                        }
+                        disabled={
+                          isScene2Interactive &&
+                          interactiveStep !== "waiting-ai-hint" &&
+                          interactiveStep !== "ready-to-send" &&
+                          interactiveStep !== "waiting-reply" &&
+                          interactiveStep !== "done"
                         }
                         className="min-h-[82px] w-full resize-none bg-transparent text-sm leading-6 text-slate-700 outline-none placeholder:text-slate-400"
                       />
@@ -618,7 +791,10 @@ export function VideoShell() {
                         disabled={
                           isInteractiveScene
                             ? !draft.trim() ||
-                              interactiveStep === "waiting-reply"
+                              interactiveStep === "waiting-reply" ||
+                              interactiveStep === "waiting-ai-hint" ||
+                              interactiveStep === "reply-select" ||
+                              interactiveStep === "reply-selected"
                             : beat >= maxBeat
                         }
                       >

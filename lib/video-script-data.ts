@@ -115,20 +115,20 @@ export const videoScripts: Record<VideoScene, VideoSceneScript> = {
     hint: {
       tone: "ai",
       badge: "AI 辅助提示",
-      scriptedText: "TA 赶 5 个 DDL 还坚持完成，或许可以聊聊 TA 的执行力呀",
+      scriptedText: "TA 居然积攒 5 个 DDL 在身然后从容应对，或许可以聊聊 TA 的执行力👀",
       liveKind: "go-deeper",
     },
     sentMessage: {
       id: "scene2-send",
       sender: "self",
-      text: "哈哈哈哈，看来你是妥妥的 P 人吧！执行力也太强了👍",
+      text: "哈哈哈哈，看来你是妥妥的 P 人吧！执行力也太强了！",
       sentAt: "22:19",
     },
     replyMessages: [
       {
         id: "scene2-reply-1",
         sender: "peer",
-        text: "被你说中啦！再累也得做完～",
+        text: "被你说中啦！DDL战神来的",
         sentAt: "22:20",
       },
     ],
