@@ -76,7 +76,7 @@ export const videoScripts: Record<VideoScene, VideoSceneScript> = {
         text: "啊啊啊是的！我老喜欢秋秋了",
         sentAt: "10:12",
         media: {
-          src: "/scene-cat-qiuqiu.jpg",
+          src: "/bridgechat/qiuqiu.jpg",
           alt: "秋秋的照片",
           caption: "秋秋",
         },
