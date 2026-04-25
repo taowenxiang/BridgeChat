@@ -1,0 +1,16 @@
+<svg width="640" height="420" viewBox="0 0 640 420" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="640" height="420" rx="36" fill="#F8E8C9"/>
+  <rect x="24" y="24" width="592" height="372" rx="28" fill="#FFF8EC"/>
+  <circle cx="320" cy="208" r="116" fill="#F1B977"/>
+  <ellipse cx="271" cy="140" rx="34" ry="56" transform="rotate(-25 271 140)" fill="#F1B977"/>
+  <ellipse cx="369" cy="140" rx="34" ry="56" transform="rotate(25 369 140)" fill="#F1B977"/>
+  <ellipse cx="282" cy="213" rx="18" ry="22" fill="#2C2A29"/>
+  <ellipse cx="358" cy="213" rx="18" ry="22" fill="#2C2A29"/>
+  <ellipse cx="320" cy="244" rx="22" ry="16" fill="#D7796C"/>
+  <path d="M300 267C307 279 333 279 340 267" stroke="#5E4031" stroke-width="8" stroke-linecap="round"/>
+  <path d="M262 248H208" stroke="#5E4031" stroke-width="6" stroke-linecap="round"/>
+  <path d="M270 262H216" stroke="#5E4031" stroke-width="6" stroke-linecap="round"/>
+  <path d="M378 248H432" stroke="#5E4031" stroke-width="6" stroke-linecap="round"/>
+  <path d="M370 262H424" stroke="#5E4031" stroke-width="6" stroke-linecap="round"/>
+  <text x="320" y="360" text-anchor="middle" fill="#8C6947" font-family="Arial, PingFang SC, sans-serif" font-size="28" font-weight="700">秋秋的照片占位图</text>
+</svg>
