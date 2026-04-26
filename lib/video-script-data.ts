@@ -119,7 +119,7 @@ export const videoScripts: Record<VideoScene, VideoSceneScript> = {
     hint: {
       tone: "ai",
       badge: "AI 辅助提示",
-      scriptedText: "TA 居然积攒 5 个 DDL 在身然后从容应对，或许可以聊聊 TA 的执行力👀",
+      scriptedText: "TA 居然积了5 个 DDL 还能在一个晚上从容应对，或许可以聊聊 TA 的执行力👀",
       liveKind: "go-deeper",
     },
     sentMessage: {
