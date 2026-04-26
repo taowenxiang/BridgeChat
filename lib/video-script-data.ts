@@ -5,6 +5,10 @@ export type VideoMessage = {
   sender: "self" | "peer";
   text: string;
   sentAt: string;
+  replyTo?: {
+    label: string;
+    text: string;
+  };
   media?: {
     src: string;
     alt: string;

@@ -73,9 +73,25 @@ function VideoMessageBubble({
                 ? "border-sky-300 bg-[linear-gradient(180deg,rgba(246,252,255,0.98),rgba(235,247,255,0.98))] shadow-[0_14px_28px_rgba(56,189,248,0.18)]"
                 : selectable
                   ? "hover:border-sky-200/80 hover:bg-sky-50/55"
-                  : ""
+                : ""
             }`}
           >
+            {message.replyTo ? (
+              <div
+                className={`mb-3 rounded-2xl border px-3 py-2 text-xs leading-5 ${
+                  isSelf
+                    ? "border-white/20 bg-white/12 text-white/90"
+                    : "border-slate-200 bg-slate-50 text-slate-500"
+                }`}
+              >
+                <div className={`font-semibold ${isSelf ? "text-white" : "text-sky-700"}`}>
+                  {message.replyTo.label}
+                </div>
+                <div className={`mt-1 line-clamp-2 ${isSelf ? "text-white/80" : "text-slate-500"}`}>
+                  {message.replyTo.text}
+                </div>
+              </div>
+            ) : null}
             <div>{message.text}</div>
             {message.media ? (
               <div className="mt-3 overflow-hidden rounded-2xl border border-black/5 bg-slate-50">
@@ -425,6 +441,9 @@ export function VideoShell() {
     }
 
     if (isScene2Interactive && interactiveStep === "ready-to-send") {
+      const replyTarget = selectedMessageId
+        ? sceneMessages.find((message) => message.id === selectedMessageId)
+        : null;
       setSceneMessages((current) => [
         ...current,
         {
@@ -432,6 +451,12 @@ export function VideoShell() {
           sender: "self",
           text,
           sentAt: script.sentMessage.sentAt,
+          replyTo: replyTarget
+            ? {
+                label: "回复对方",
+                text: replyTarget.text,
+              }
+            : undefined,
         },
       ]);
       setDraft("");
@@ -695,7 +720,7 @@ export function VideoShell() {
                           {isScene2Interactive &&
                           selectedMessageId === message.id &&
                           interactiveStep === "reply-selected" ? (
-                            <div className="absolute bottom-0 left-3">
+                            <div className="absolute right-[5rem] top-[calc(100%-4rem)]">
                               <button
                                 type="button"
                                 onClick={startScene2Reply}
