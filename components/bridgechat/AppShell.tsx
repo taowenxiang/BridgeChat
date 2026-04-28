@@ -12,7 +12,7 @@ import { Composer } from "@/components/bridgechat/Composer";
 import { LanguageToggle } from "@/components/bridgechat/LanguageToggle";
 import { ProgressUnlockBanner } from "@/components/bridgechat/ProgressUnlockBanner";
 import { SuggestionCard } from "@/components/bridgechat/SuggestionCard";
-import { UnderstandDrawer } from "@/components/bridgechat/UnderstandDrawer";
+import { UnderstandDrawer, UnderstandPanel } from "@/components/bridgechat/UnderstandDrawer";
 import { useLocale } from "@/components/providers/LocaleProvider";
 import { Button } from "@/components/ui/button";
 import {
@@ -416,19 +416,6 @@ export function AppShell({ aiConfigured }: AppShellProps) {
             <BookOpenText className="h-4 w-4" />
             Demo Guide
           </Button>
-          <div className="relative">
-            <UnderstandDrawer
-              open={drawerOpen}
-              onOpenChange={setDrawerOpen}
-              activeTab={activeTab}
-              onTabChange={setActiveTab}
-              commonGround={commonGround}
-              beyondLabelUnlocked={unlockState.beyondLabelUnlocked}
-              users={users}
-              latestSuggestion={suggestion}
-              locale={locale}
-            />
-          </div>
           <Button variant="secondary" onClick={() => resetDemo()}>
             <RotateCcw className="h-4 w-4" />
             {copy.demo.resetDemo}
@@ -519,59 +506,99 @@ export function AppShell({ aiConfigured }: AppShellProps) {
           ) : null}
         </AnimatePresence>
 
-        <section className="relative flex min-h-0 w-full max-w-[980px] flex-col overflow-hidden rounded-[34px] border border-[var(--border-strong)] bg-white/62 shadow-[0_22px_55px_rgba(15,23,42,0.08)] backdrop-blur">
-          <ChatHeader users={users} locale={locale} />
-          <div className="border-b border-[var(--border-soft)] px-6 py-5">
-            {aiConfigured ? (
-              <ActionBar
-                onAction={(kind) => void requestSuggestion(kind)}
-                kinds={["icebreaker", "go-deeper"]}
-                disabled={isReplying}
-                locale={locale}
-              />
-            ) : (
-              <div className="rounded-[24px] border border-[var(--border-strong)] bg-white/78 px-4 py-4 text-sm leading-6 text-slate-600 shadow-sm">
-                {copy.demo.aiDisabled}
+        <section className="relative flex min-h-0 w-full max-w-[1240px] flex-col overflow-hidden rounded-[34px] border border-[var(--border-strong)] bg-white/62 shadow-[0_22px_55px_rgba(15,23,42,0.08)] backdrop-blur">
+          <div className="grid min-h-0 flex-1 lg:grid-cols-[260px_minmax(0,1fr)_320px]">
+            <aside className="border-b border-[var(--border-soft)] bg-[linear-gradient(180deg,rgba(255,255,255,0.7),rgba(246,250,248,0.88))] lg:border-b-0 lg:border-r">
+              <div className="h-full overflow-y-auto px-5 py-6">
+                <ChatHeader users={users} locale={locale} />
               </div>
-            )}
-          </div>
+            </aside>
 
-          <div className="flex min-h-0 flex-1 flex-col">
-            <ChatThread
-              messages={messages}
-              users={users}
-              activeUserId={activeUser.id}
-              isReplying={isReplying}
-              selfLabel={copy.demo.selfLabel}
-              typingLabel={copy.demo.partnerThinking}
-              replyLabel={copy.demo.reply}
-              onReply={aiConfigured ? selectReplyTarget : undefined}
-            />
+            <div className="flex min-h-0 flex-1 flex-col">
+              <div className="min-h-0 flex-1">
+                <ChatThread
+                  messages={messages}
+                  users={users}
+                  activeUserId={activeUser.id}
+                  isReplying={isReplying}
+                  selfLabel={copy.demo.selfLabel}
+                  typingLabel={copy.demo.partnerThinking}
+                  replyLabel={copy.demo.reply}
+                  onReply={aiConfigured ? selectReplyTarget : undefined}
+                />
+              </div>
 
-            <div className="shrink-0 space-y-4 border-t border-[var(--border-soft)] px-6 py-5">
-              {aiNotice ? (
-                <div className="rounded-[24px] border border-[var(--border-strong)] bg-white/84 px-4 py-4 text-sm leading-6 text-slate-600 shadow-sm">
-                  {aiNotice}
-                </div>
-              ) : null}
-
-              <SuggestionCard
-                suggestion={suggestion}
-                onInsert={insertSuggestion}
-                onDismiss={dismissSuggestion}
-                locale={locale}
-              />
-
-              <Composer
-                draft={draft}
-                setDraft={handleDraftChange}
-                onSend={() => sendMessage()}
-                replyTarget={replyTarget}
-                onClearReplyTarget={clearReplyTarget}
-                disabled={isReplying}
-                locale={locale}
-              />
+              <div className="shrink-0 border-t border-[var(--border-soft)] px-5 py-5 md:px-6">
+                <Composer
+                  draft={draft}
+                  setDraft={handleDraftChange}
+                  onSend={() => sendMessage()}
+                  replyTarget={replyTarget}
+                  onClearReplyTarget={clearReplyTarget}
+                  disabled={isReplying}
+                  locale={locale}
+                />
+              </div>
             </div>
+
+            <aside className="border-t border-[var(--border-soft)] bg-[linear-gradient(180deg,rgba(243,247,246,0.66),rgba(255,255,255,0.82))] lg:border-l lg:border-t-0">
+              <div className="flex h-full flex-col gap-4 overflow-y-auto px-5 py-6">
+                {aiConfigured ? (
+                  <ActionBar
+                    onAction={(kind) => void requestSuggestion(kind)}
+                    kinds={["icebreaker", "go-deeper"]}
+                    disabled={isReplying}
+                    locale={locale}
+                    compact
+                  />
+                ) : (
+                  <div className="rounded-[24px] border border-[var(--border-strong)] bg-white/78 px-4 py-4 text-sm leading-6 text-slate-600 shadow-sm">
+                    {copy.demo.aiDisabled}
+                  </div>
+                )}
+
+                {aiNotice ? (
+                  <div className="rounded-[24px] border border-[var(--border-strong)] bg-white/84 px-4 py-4 text-sm leading-6 text-slate-600 shadow-sm">
+                    {aiNotice}
+                  </div>
+                ) : null}
+
+                <SuggestionCard
+                  suggestion={suggestion}
+                  onInsert={insertSuggestion}
+                  onDismiss={dismissSuggestion}
+                  locale={locale}
+                />
+
+                <div className="lg:hidden">
+                  <div className="relative">
+                    <UnderstandDrawer
+                      open={drawerOpen}
+                      onOpenChange={setDrawerOpen}
+                      activeTab={activeTab}
+                      onTabChange={setActiveTab}
+                      commonGround={commonGround}
+                      beyondLabelUnlocked={unlockState.beyondLabelUnlocked}
+                      users={users}
+                      latestSuggestion={suggestion}
+                      locale={locale}
+                    />
+                  </div>
+                </div>
+
+                <div className="hidden lg:block">
+                  <UnderstandPanel
+                    activeTab={activeTab}
+                    onTabChange={setActiveTab}
+                    commonGround={commonGround}
+                    beyondLabelUnlocked={unlockState.beyondLabelUnlocked}
+                    users={users}
+                    latestSuggestion={suggestion}
+                    locale={locale}
+                  />
+                </div>
+              </div>
+            </aside>
           </div>
         </section>
       </div>

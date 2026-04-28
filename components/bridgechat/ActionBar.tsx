@@ -4,6 +4,7 @@ import type { ComponentType } from "react";
 import { Compass, MessagesSquare, WandSparkles } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import { getCopy } from "@/lib/copy";
 import type { SuggestionKind } from "@/lib/types";
 
@@ -21,18 +22,20 @@ export function ActionBar({
   kinds,
   disabled,
   locale,
+  compact = false,
 }: {
   onAction: (kind: SuggestionKind) => void;
   kinds?: SuggestionKind[];
   disabled?: boolean;
   locale: "en" | "zh";
+  compact?: boolean;
 }) {
   const demoCopy = getCopy(locale).demo;
   const actions: Array<{
-  kind: SuggestionKind;
-  label: string;
-  description: string;
-  icon: ComponentType<{ className?: string }>;
+    kind: SuggestionKind;
+    label: string;
+    description: string;
+    icon: ComponentType<{ className?: string }>;
   }> = (kinds ?? (Object.keys(actionIcons) as SuggestionKind[])).map((kind) => ({
     kind,
     label: demoCopy.actionLabels[kind],
@@ -41,14 +44,17 @@ export function ActionBar({
   }));
 
   return (
-    <div className="grid gap-3 lg:grid-cols-3">
+    <div className={cn("grid gap-3", compact ? "grid-cols-1" : "lg:grid-cols-3")}>
       {actions.map((action) => (
         <button
           key={action.kind}
           type="button"
           onClick={() => onAction(action.kind)}
           disabled={disabled}
-          className="group rounded-[24px] border border-[var(--border-strong)] bg-white/78 p-4 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-[var(--accent-soft)] hover:shadow-[0_14px_30px_rgba(15,23,42,0.08)] disabled:pointer-events-none disabled:opacity-60"
+          className={cn(
+            "group rounded-[24px] border border-[var(--border-strong)] bg-white/78 p-4 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-[var(--accent-soft)] hover:shadow-[0_14px_30px_rgba(15,23,42,0.08)] disabled:pointer-events-none disabled:opacity-60",
+            compact && "bg-white/86",
+          )}
         >
           <div className="flex items-center justify-between gap-3">
             <div className="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-[var(--panel-muted)] text-[var(--accent-stronger)]">

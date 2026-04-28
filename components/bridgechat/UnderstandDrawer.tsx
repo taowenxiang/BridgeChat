@@ -41,6 +41,12 @@ function DrawerContent(props: Omit<UnderstandDrawerProps, "open" | "onOpenChange
   );
 }
 
+export function UnderstandPanel(
+  props: Omit<UnderstandDrawerProps, "open" | "onOpenChange">,
+) {
+  return <DrawerContent {...props} />;
+}
+
 export function UnderstandDrawer({
   open,
   onOpenChange,
