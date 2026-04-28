@@ -25,6 +25,11 @@ export type ChatMessage = {
   text: string;
   sentAt: string;
   tone?: "seeded" | "user" | "reply";
+  replyTo?: {
+    messageId: string;
+    label: string;
+    text: string;
+  };
 };
 
 export type SuggestionKind = "icebreaker" | "go-deeper" | "avoid-assumptions";
@@ -58,4 +63,7 @@ export type BridgeChatContext = {
   messages: ChatMessage[];
   draft?: string;
   progress: DemoProgress;
+  focusedMessage?: ChatMessage;
 };
+
+export type AiApiStatus = "ok" | "disabled" | "unavailable";

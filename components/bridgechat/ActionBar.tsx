@@ -18,10 +18,12 @@ const actionIcons: Record<
 
 export function ActionBar({
   onAction,
+  kinds,
   disabled,
   locale,
 }: {
   onAction: (kind: SuggestionKind) => void;
+  kinds?: SuggestionKind[];
   disabled?: boolean;
   locale: "en" | "zh";
 }) {
@@ -31,7 +33,7 @@ export function ActionBar({
   label: string;
   description: string;
   icon: ComponentType<{ className?: string }>;
-  }> = (Object.keys(actionIcons) as SuggestionKind[]).map((kind) => ({
+  }> = (kinds ?? (Object.keys(actionIcons) as SuggestionKind[])).map((kind) => ({
     kind,
     label: demoCopy.actionLabels[kind],
     description: demoCopy.actionDescriptions[kind],

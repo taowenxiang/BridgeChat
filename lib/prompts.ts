@@ -9,7 +9,9 @@ Generate one low-pressure opening message and one short explanation.
 Keep the tone natural, warm, and concise.`,
     "go-deeper": `You are helping a user continue a promising early conversation.
 Do not stereotype based on MBTI or personality labels.
-Ask about experience, meaning, preferences, or real situations.
+If the context includes a focused message, ground the response in that exact message.
+Ask about experience, meaning, preferences, communication style, or real situations.
+Find one specific angle worth replying to instead of summarizing the whole conversation.
 Generate one thoughtful follow-up question and one short explanation.`,
     "avoid-assumptions": `Rewrite the user's draft so that it becomes more open-ended and less label-based.
 Do not shame the user.
@@ -27,7 +29,9 @@ Return 3-4 short bullet points.`,
 语气自然、温和、简洁，输出使用简体中文。`,
     "go-deeper": `你正在帮助用户把一段有潜力的初始对话继续下去。
 不要基于 MBTI 或人格标签做刻板推断。
-优先询问经历、意义、偏好或真实场景。
+如果上下文里有 focused message，请优先围绕那一条具体消息来生成建议。
+优先询问经历、意义、偏好、沟通风格或真实场景。
+请帮用户从那条消息里找到一个具体可回复的切入点，而不是泛泛总结整段对话。
 请生成一个更深入的问题，并附上一句简短解释。
 输出使用简体中文。`,
     "avoid-assumptions": `请把用户的草稿改写得更开放、少一点标签化判断。

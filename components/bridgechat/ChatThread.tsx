@@ -13,6 +13,8 @@ export function ChatThread({
   isReplying,
   selfLabel,
   typingLabel,
+  replyLabel,
+  onReply,
 }: {
   messages: ChatMessage[];
   users: [DemoUser, DemoUser];
@@ -20,6 +22,8 @@ export function ChatThread({
   isReplying: boolean;
   selfLabel: string;
   typingLabel: string;
+  replyLabel: string;
+  onReply?: (message: ChatMessage) => void;
 }) {
   const endRef = useRef<HTMLDivElement | null>(null);
   const usersById = Object.fromEntries(users.map((user) => [user.id, user])) as Record<
@@ -47,6 +51,8 @@ export function ChatThread({
               sender={usersById[message.senderId]}
               isOwn={message.senderId === activeUserId}
               selfLabel={selfLabel}
+              replyLabel={replyLabel}
+              onReply={message.senderId === activeUserId ? undefined : onReply}
             />
           </motion.div>
         ))}

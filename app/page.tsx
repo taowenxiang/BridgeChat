@@ -42,9 +42,6 @@ export default function HomePage() {
                 <ArrowRight className="h-4 w-4" />
               </Link>
             </Button>
-            <Button asChild size="lg" variant="secondary">
-              <Link href="/video">{copy.landing.videoLaunch}</Link>
-            </Button>
             <Button asChild variant="secondary" size="lg">
               <a href="#principles">{copy.landing.viewPrinciples}</a>
             </Button>

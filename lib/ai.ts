@@ -1,9 +1,21 @@
-import {
-  buildMockSuggestion,
-  buildReflectionSummary,
-} from "@/lib/bridgechat-engine";
 import { getPromptTemplate } from "@/lib/prompts";
 import type { BridgeChatContext, Suggestion, SuggestionKind } from "@/lib/types";
+
+export class AiDisabledError extends Error {
+  constructor() {
+    super("OPENAI_API_KEY is not configured.");
+  }
+}
+
+export class AiUnavailableError extends Error {
+  constructor(message = "AI output was unavailable.") {
+    super(message);
+  }
+}
+
+export function isAiConfigured() {
+  return Boolean(process.env.OPENAI_API_KEY);
+}
 
 function extractOutputText(payload: any) {
   if (typeof payload?.output_text === "string" && payload.output_text.length > 0) {
@@ -24,7 +36,7 @@ function extractOutputText(payload: any) {
 async function callOpenAi(kind: SuggestionKind | "reflection", context: BridgeChatContext) {
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) {
-    return null;
+    throw new AiDisabledError();
   }
 
   const locale = context.locale ?? "en";
@@ -64,46 +76,36 @@ export async function generateSuggestion(
   kind: SuggestionKind,
   context: BridgeChatContext,
 ): Promise<Suggestion> {
-  const locale = context.locale ?? "en";
-  try {
-    const output = await callOpenAi(kind, context);
-    if (output) {
-      const [textLine, explanationLine] = output
-        .split("\n")
-        .map((line: string) => line.replace(/^[*-]\s*/, "").trim())
-        .filter(Boolean);
+  const output = await callOpenAi(kind, context);
+  const [textLine, explanationLine] = output
+    .split("\n")
+    .map((line: string) => line.replace(/^[*-]\s*/, "").trim())
+    .filter(Boolean);
 
-      if (textLine && explanationLine) {
-        return {
-          id: `${kind}-live`,
-          kind,
-          text: textLine,
-          explanation: explanationLine,
-          sourceTags: ["live AI", "explainable"],
-        };
-      }
-    }
-  } catch {
-    return buildMockSuggestion(kind, context, locale);
+  if (textLine && explanationLine) {
+    return {
+      id: `${kind}-live`,
+      kind,
+      text: textLine,
+      explanation: explanationLine,
+      sourceTags: ["live AI", "explainable"],
+    };
   }
 
-  return buildMockSuggestion(kind, context, locale);
+  throw new AiUnavailableError("Suggestion output was incomplete.");
 }
 
 export async function generateReflection(context: BridgeChatContext) {
-  const locale = context.locale ?? "en";
-  try {
-    const output = await callOpenAi("reflection", context);
-    if (output) {
-      return output
-        .split("\n")
-        .map((line: string) => line.replace(/^[*-]\s*/, "").trim())
-        .filter(Boolean)
-        .slice(0, 4);
-    }
-  } catch {
-    return buildReflectionSummary(context, locale);
+  const output = await callOpenAi("reflection", context);
+  const reflection = output
+    .split("\n")
+    .map((line: string) => line.replace(/^[*-]\s*/, "").trim())
+    .filter(Boolean)
+    .slice(0, 4);
+
+  if (reflection.length > 0) {
+    return reflection;
   }
 
-  return buildReflectionSummary(context, locale);
+  throw new AiUnavailableError("Reflection output was empty.");
 }

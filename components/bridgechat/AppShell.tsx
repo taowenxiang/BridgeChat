@@ -2,7 +2,7 @@
 
 import { startTransition, useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { Bot, RotateCcw, Sparkles, WandSparkles } from "lucide-react";
+import { RotateCcw, Sparkles } from "lucide-react";
 
 import { ActionBar } from "@/components/bridgechat/ActionBar";
 import { ChatHeader } from "@/components/bridgechat/ChatHeader";
@@ -10,16 +10,12 @@ import { ChatThread } from "@/components/bridgechat/ChatThread";
 import { Composer } from "@/components/bridgechat/Composer";
 import { LanguageToggle } from "@/components/bridgechat/LanguageToggle";
 import { ProgressUnlockBanner } from "@/components/bridgechat/ProgressUnlockBanner";
-import { ReflectionPanel } from "@/components/bridgechat/ReflectionPanel";
 import { SuggestionCard } from "@/components/bridgechat/SuggestionCard";
 import { UnderstandDrawer } from "@/components/bridgechat/UnderstandDrawer";
 import { useLocale } from "@/components/providers/LocaleProvider";
 import { Button } from "@/components/ui/button";
 import {
   buildAutoReply,
-  buildMockSuggestion,
-  buildReflectionSummary,
-  detectAssumptionHeavyDraft,
   formatClock,
   getCommonGround,
   getUnlockBanner,
@@ -29,22 +25,42 @@ import {
 import { getCopy } from "@/lib/copy";
 import {
   getDemoUsers,
-  getGuidedDraft,
   getSeededMessages,
   initialProgress,
 } from "@/lib/mock-data";
 import type {
-  AiMode,
   BridgeChatContext,
   ChatMessage,
-  DemoProgress,
   Locale,
   Suggestion,
   SuggestionKind,
   UnlockState,
 } from "@/lib/types";
 
-export function AppShell() {
+type AppShellProps = {
+  aiConfigured: boolean;
+};
+
+type SuggestionApiPayload =
+  | { status: "ok"; suggestion: Suggestion }
+  | { status: "disabled"; message?: string }
+  | { status: "unavailable"; message?: string };
+
+function buildAutoKey(replyTarget: ChatMessage | null, text: string) {
+  const normalized = text.trim();
+
+  if (replyTarget) {
+    return `reply:${replyTarget.id}:${normalized}`;
+  }
+
+  if (normalized) {
+    return `icebreaker:${normalized}`;
+  }
+
+  return null;
+}
+
+export function AppShell({ aiConfigured }: AppShellProps) {
   const { locale } = useLocale();
   const copy = getCopy(locale);
   const users = getDemoUsers(locale);
@@ -54,35 +70,29 @@ export function AppShell() {
 
   const [messages, setMessages] = useState<ChatMessage[]>(seededMessages);
   const [draft, setDraft] = useState("");
-  const [aiMode, setAiMode] = useState<AiMode>("mock");
   const [drawerOpen, setDrawerOpen] = useState(true);
   const [activeTab, setActiveTab] = useState("common");
   const [isReplying, setIsReplying] = useState(false);
-  const [progress, setProgress] = useState<DemoProgress>(initialProgress);
+  const [progress, setProgress] = useState(initialProgress);
   const [unlockState, setUnlockState] = useState<UnlockState>(
     getUnlockState(initialProgress),
   );
   const [bannerMessage, setBannerMessage] = useState<string | null>(null);
   const [suggestion, setSuggestion] = useState<Suggestion | null>(null);
-  const [reflection, setReflection] = useState<string[]>(
-    buildReflectionSummary(
-      {
-        locale,
-        users,
-        messages: seededMessages,
-        progress: initialProgress,
-      },
-      locale,
-    ),
-  );
-  const [guidedFlowRunning, setGuidedFlowRunning] = useState(false);
+  const [replyTarget, setReplyTarget] = useState<ChatMessage | null>(null);
+  const [aiNotice, setAiNotice] = useState<string | null>(null);
+  const [dismissedAutoKey, setDismissedAutoKey] = useState<string | null>(null);
+
   const timersRef = useRef<number[]>([]);
   const bannerTimerRef = useRef<number | null>(null);
   const messagesRef = useRef(messages);
   const progressRef = useRef(progress);
   const unlockStateRef = useRef(unlockState);
   const draftRef = useRef(draft);
+  const replyTargetRef = useRef(replyTarget);
   const localeRef = useRef<Locale>(locale);
+  const currentAutoKeyRef = useRef<string | null>(null);
+  const requestSequenceRef = useRef(0);
 
   useEffect(() => {
     messagesRef.current = messages;
@@ -100,9 +110,28 @@ export function AppShell() {
     draftRef.current = draft;
   }, [draft]);
 
+  useEffect(() => {
+    replyTargetRef.current = replyTarget;
+  }, [replyTarget]);
+
+  useEffect(() => {
+    if (aiConfigured) {
+      setAiNotice(null);
+    }
+  }, [aiConfigured]);
+
   function schedule(fn: () => void, delay: number) {
     const timer = window.setTimeout(fn, delay);
     timersRef.current.push(timer);
+  }
+
+  function clearTimers() {
+    timersRef.current.forEach((timer) => window.clearTimeout(timer));
+    timersRef.current = [];
+
+    if (bannerTimerRef.current) {
+      window.clearTimeout(bannerTimerRef.current);
+    }
   }
 
   function getCurrentContext(): BridgeChatContext {
@@ -112,44 +141,27 @@ export function AppShell() {
       messages: messagesRef.current,
       draft: draftRef.current,
       progress: progressRef.current,
+      focusedMessage: replyTargetRef.current ?? undefined,
     };
-  }
-
-  function clearTimers() {
-    timersRef.current.forEach((timer) => window.clearTimeout(timer));
-    timersRef.current = [];
-    if (bannerTimerRef.current) {
-      window.clearTimeout(bannerTimerRef.current);
-    }
   }
 
   function resetDemo(nextLocale?: Locale) {
     const targetLocale = nextLocale ?? locale;
-    const targetUsers = getDemoUsers(targetLocale);
-    const targetSeededMessages = getSeededMessages(targetLocale);
+    const targetMessages = getSeededMessages(targetLocale);
 
     clearTimers();
-    setMessages(targetSeededMessages);
+    setMessages(targetMessages);
     setDraft("");
     setDrawerOpen(true);
     setActiveTab("common");
     setIsReplying(false);
     setProgress(initialProgress);
     setUnlockState(getUnlockState(initialProgress));
-    setSuggestion(null);
-    setReflection(
-      buildReflectionSummary(
-        {
-          locale: targetLocale,
-          users: targetUsers,
-          messages: targetSeededMessages,
-          progress: initialProgress,
-        },
-        targetLocale,
-      ),
-    );
-    setGuidedFlowRunning(false);
     setBannerMessage(null);
+    setSuggestion(null);
+    setReplyTarget(null);
+    setDismissedAutoKey(null);
+    setAiNotice(null);
   }
 
   useEffect(() => {
@@ -179,100 +191,142 @@ export function AppShell() {
   }, [progress, unlockState, locale]);
 
   useEffect(() => {
-    if (!unlockState.reflectionUnlocked) {
-      return;
-    }
-
-    let cancelled = false;
-    const liveContext: BridgeChatContext = {
-      locale,
-      users,
-      messages,
-      draft,
-      progress,
-    };
-
-    async function refreshReflection() {
-      if (aiMode === "live") {
-        try {
-          const response = await fetch("/api/bridgechat", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              kind: "reflection",
-              context: liveContext,
-            }),
-          });
-          const payload = await response.json();
-          if (!cancelled && Array.isArray(payload.reflection)) {
-            setReflection(payload.reflection);
-            return;
-          }
-        } catch {
-          // Fall through to mock reflection.
-        }
-      }
-
-      if (!cancelled) {
-        setReflection(buildReflectionSummary(liveContext, locale));
-      }
-    }
-
-    void refreshReflection();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [aiMode, messages, draft, progress, unlockState.reflectionUnlocked, locale, users]);
-
-  useEffect(() => {
     return () => {
       clearTimers();
     };
   }, []);
 
   const commonGround = getCommonGround(unlockState.commonGroundUnlocked, locale);
-  const assumptionHeavy = detectAssumptionHeavyDraft(draft);
+  const trimmedDraft = draft.trim();
+  const autoKind: SuggestionKind | null = replyTarget
+    ? "go-deeper"
+    : trimmedDraft
+      ? "icebreaker"
+      : null;
+  const autoKey = autoKind ? buildAutoKey(replyTarget, draft) : null;
 
-  async function requestSuggestion(kind: SuggestionKind) {
+  currentAutoKeyRef.current = autoKey;
+
+  useEffect(() => {
+    if (!aiConfigured || isReplying || !autoKind || !autoKey) {
+      return;
+    }
+
+    if (dismissedAutoKey === autoKey) {
+      return;
+    }
+
+    const timer = window.setTimeout(() => {
+      void requestSuggestion(autoKind, {
+        auto: true,
+        requestKey: autoKey,
+      });
+    }, 3000);
+
+    return () => window.clearTimeout(timer);
+  }, [aiConfigured, autoKind, autoKey, dismissedAutoKey, isReplying]);
+
+  async function requestSuggestion(
+    kind: SuggestionKind,
+    options?: { auto?: boolean; requestKey?: string | null },
+  ) {
+    if (!aiConfigured) {
+      setSuggestion(null);
+      return;
+    }
+
     setActiveTab("ask");
     setDrawerOpen(true);
-    const currentContext = getCurrentContext();
+    setAiNotice(null);
 
     if (kind === "go-deeper") {
       setProgress((current) => ({ ...current, usedGoDeeper: true }));
     }
 
-    if (aiMode === "live") {
-      try {
-        const response = await fetch("/api/bridgechat", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            kind,
-            context: currentContext,
-          }),
-        });
-        const payload = await response.json();
-        if (payload.suggestion) {
-          setSuggestion(payload.suggestion);
-          return;
-        }
-      } catch {
-        setSuggestion(buildMockSuggestion(kind, currentContext, locale));
+    const currentContext = getCurrentContext();
+    const requestId = requestSequenceRef.current + 1;
+    requestSequenceRef.current = requestId;
+
+    try {
+      const response = await fetch("/api/bridgechat", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          kind,
+          context: currentContext,
+        }),
+      });
+
+      const payload = (await response.json()) as SuggestionApiPayload;
+
+      if (requestId !== requestSequenceRef.current) {
         return;
       }
-    }
 
-    setSuggestion(buildMockSuggestion(kind, currentContext, locale));
+      if (options?.auto && options.requestKey !== currentAutoKeyRef.current) {
+        return;
+      }
+
+      if (payload.status === "ok") {
+        setSuggestion(payload.suggestion);
+        return;
+      }
+
+      setSuggestion(null);
+      setAiNotice(
+        payload.status === "disabled"
+          ? copy.demo.aiDisabled
+          : payload.message ?? copy.demo.aiUnavailable,
+      );
+    } catch {
+      if (requestId !== requestSequenceRef.current) {
+        return;
+      }
+
+      if (options?.auto && options.requestKey !== currentAutoKeyRef.current) {
+        return;
+      }
+
+      setSuggestion(null);
+      setAiNotice(copy.demo.aiUnavailable);
+    }
+  }
+
+  function handleDraftChange(value: string) {
+    setDraft(value);
+    setAiNotice(null);
   }
 
   function insertSuggestion(text: string) {
     setDraft(text);
+    setAiNotice(null);
+    setDismissedAutoKey(buildAutoKey(replyTargetRef.current, text));
+  }
+
+  function dismissSuggestion() {
+    if (currentAutoKeyRef.current) {
+      setDismissedAutoKey(currentAutoKeyRef.current);
+    }
+    setSuggestion(null);
+  }
+
+  function clearReplyTarget() {
+    setReplyTarget(null);
+    setSuggestion(null);
+    setDismissedAutoKey(null);
+    setAiNotice(null);
+  }
+
+  function selectReplyTarget(message: ChatMessage) {
+    setReplyTarget(message);
+    setDraft("");
+    setSuggestion(null);
+    setDismissedAutoKey(null);
+    setAiNotice(null);
+    setActiveTab("ask");
+    setDrawerOpen(true);
   }
 
   function sendMessage(rawText?: string) {
@@ -282,6 +336,7 @@ export function AppShell() {
     }
 
     const currentMessages = messagesRef.current;
+    const currentReplyTarget = replyTargetRef.current;
     const sentAt = formatClock(currentMessages.length - seededMessages.length + 1);
     const newMessage: ChatMessage = {
       id: `msg-${Date.now()}`,
@@ -289,12 +344,22 @@ export function AppShell() {
       text,
       sentAt,
       tone: "user",
+      replyTo: currentReplyTarget
+        ? {
+            messageId: currentReplyTarget.id,
+            label: copy.demo.replyingTo,
+            text: currentReplyTarget.text,
+          }
+        : undefined,
     };
 
     startTransition(() => {
       setMessages((current) => [...current, newMessage]);
       setDraft("");
       setSuggestion(null);
+      setReplyTarget(null);
+      setDismissedAutoKey(null);
+      setAiNotice(null);
       setProgress((current) => ({
         userMessagesSent: current.userMessagesSent + 1,
         totalNewMessages: current.totalNewMessages + 1,
@@ -336,42 +401,6 @@ export function AppShell() {
     }, 900);
   }
 
-  function playGuidedFlow() {
-    resetDemo();
-    setGuidedFlowRunning(true);
-
-    const currentContext = () => getCurrentContext();
-
-    schedule(() => {
-      void requestSuggestion("icebreaker");
-    }, 500);
-    schedule(() => {
-      insertSuggestion(buildMockSuggestion("icebreaker", currentContext(), locale).text);
-    }, 1500);
-    schedule(() => {
-      sendMessage(buildMockSuggestion("icebreaker", currentContext(), locale).text);
-    }, 2400);
-    schedule(() => {
-      setDraft(getGuidedDraft(locale));
-    }, 4200);
-    schedule(() => {
-      void requestSuggestion("avoid-assumptions");
-    }, 5200);
-    schedule(() => {
-      insertSuggestion(buildMockSuggestion("avoid-assumptions", currentContext(), locale).text);
-    }, 6200);
-    schedule(() => {
-      sendMessage(buildMockSuggestion("avoid-assumptions", currentContext(), locale).text);
-    }, 7300);
-    schedule(() => {
-      void requestSuggestion("go-deeper");
-      setActiveTab("beyond");
-    }, 9100);
-    schedule(() => {
-      setGuidedFlowRunning(false);
-    }, 10200);
-  }
-
   return (
     <main className="relative min-h-screen overflow-hidden px-4 py-6 md:px-6 lg:px-8">
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(160,231,216,0.35),transparent_35%),radial-gradient(circle_at_bottom_right,rgba(117,138,222,0.18),transparent_30%)]" />
@@ -400,17 +429,6 @@ export function AppShell() {
               <RotateCcw className="h-4 w-4" />
               {copy.demo.resetDemo}
             </Button>
-            <Button variant="default" onClick={playGuidedFlow} disabled={guidedFlowRunning}>
-              <WandSparkles className="h-4 w-4" />
-              {guidedFlowRunning ? copy.demo.guidedFlowRunning : copy.demo.playGuidedFlow}
-            </Button>
-            <Button
-              variant="subtle"
-              onClick={() => setAiMode((current) => (current === "mock" ? "live" : "mock"))}
-            >
-              <Bot className="h-4 w-4" />
-              {copy.demo.toggleAiMode}: {aiMode}
-            </Button>
           </div>
 
           <div className="mt-8 rounded-[28px] border border-[var(--border-strong)] bg-[var(--panel-muted)] p-5">
@@ -432,10 +450,14 @@ export function AppShell() {
           <div className="mt-8 space-y-3">
             {copy.demo.steps.map((step, index) => {
               const active =
-                (index === 0 && progress.totalNewMessages === 0) ||
-                (index === 1 && progress.totalNewMessages > 0) ||
-                (index === 2 && unlockState.beyondLabelUnlocked) ||
-                (index === 3 && unlockState.reflectionUnlocked);
+                index === 0
+                  ? true
+                  : index === 1
+                    ? progress.userMessagesSent > 0
+                    : Boolean(replyTarget) ||
+                      messages.some((message) => Boolean(message.replyTo)) ||
+                      unlockState.beyondLabelUnlocked;
+
               return (
                 <div
                   key={step}
@@ -451,8 +473,6 @@ export function AppShell() {
             })}
           </div>
 
-          <p className="mt-8 text-xs leading-6 text-slate-400">{copy.demo.optionalLive}</p>
-
           <Link href="/" className="mt-6 inline-flex text-sm font-semibold text-[var(--accent-stronger)]">
             {copy.demo.backToIntro}
           </Link>
@@ -461,7 +481,18 @@ export function AppShell() {
         <section className="relative min-w-0 flex-1 rounded-[34px] border border-[var(--border-strong)] bg-white/62 shadow-[0_22px_55px_rgba(15,23,42,0.08)] backdrop-blur">
           <ChatHeader users={users} locale={locale} />
           <div className="border-b border-[var(--border-soft)] px-6 py-5">
-            <ActionBar onAction={(kind) => void requestSuggestion(kind)} disabled={isReplying} locale={locale} />
+            {aiConfigured ? (
+              <ActionBar
+                onAction={(kind) => void requestSuggestion(kind)}
+                kinds={["icebreaker", "go-deeper"]}
+                disabled={isReplying}
+                locale={locale}
+              />
+            ) : (
+              <div className="rounded-[24px] border border-[var(--border-strong)] bg-white/78 px-4 py-4 text-sm leading-6 text-slate-600 shadow-sm">
+                {copy.demo.aiDisabled}
+              </div>
+            )}
           </div>
 
           <div className="grid gap-5 px-0 pb-6">
@@ -472,29 +503,31 @@ export function AppShell() {
               isReplying={isReplying}
               selfLabel={copy.demo.selfLabel}
               typingLabel={copy.demo.partnerThinking}
+              replyLabel={copy.demo.reply}
+              onReply={aiConfigured ? selectReplyTarget : undefined}
             />
 
             <div className="space-y-4 px-6">
+              {aiNotice ? (
+                <div className="rounded-[24px] border border-[var(--border-strong)] bg-white/84 px-4 py-4 text-sm leading-6 text-slate-600 shadow-sm">
+                  {aiNotice}
+                </div>
+              ) : null}
+
               <SuggestionCard
                 suggestion={suggestion}
                 onInsert={insertSuggestion}
-                onDismiss={() => setSuggestion(null)}
+                onDismiss={dismissSuggestion}
                 locale={locale}
               />
 
               <Composer
                 draft={draft}
-                setDraft={setDraft}
+                setDraft={handleDraftChange}
                 onSend={() => sendMessage()}
-                onRewrite={() => void requestSuggestion("avoid-assumptions")}
-                showRewriteHint={assumptionHeavy}
+                replyTarget={replyTarget}
+                onClearReplyTarget={clearReplyTarget}
                 disabled={isReplying}
-                locale={locale}
-              />
-
-              <ReflectionPanel
-                visible={unlockState.reflectionUnlocked}
-                insights={reflection}
                 locale={locale}
               />
             </div>
