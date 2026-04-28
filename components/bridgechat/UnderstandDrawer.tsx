@@ -1,6 +1,5 @@
 "use client";
 
-import * as Dialog from "@radix-ui/react-dialog";
 import { AnimatePresence, motion } from "motion/react";
 import { ChevronLeft, PanelsTopLeft } from "lucide-react";
 
@@ -103,28 +102,38 @@ export function UnderstandDrawer({
       </div>
 
       <div className="xl:hidden">
-        <Dialog.Root open={open} onOpenChange={onOpenChange}>
-          <Dialog.Trigger asChild>
-            <Button variant="secondary" className="w-full justify-center">
-              <PanelsTopLeft className="h-4 w-4" />
-              {copy.demo.mobileDrawerButton}
-            </Button>
-          </Dialog.Trigger>
-          <Dialog.Portal>
-            <Dialog.Overlay className="fixed inset-0 z-40 bg-slate-950/25 backdrop-blur-sm" />
-            <Dialog.Content className="fixed inset-x-4 bottom-4 top-auto z-50 max-h-[80vh] overflow-auto rounded-[32px] outline-none">
-              <DrawerContent
-                activeTab={activeTab}
-                onTabChange={onTabChange}
-                commonGround={commonGround}
-                beyondLabelUnlocked={beyondLabelUnlocked}
-                users={users}
-                latestSuggestion={latestSuggestion}
-                locale={locale}
-              />
-            </Dialog.Content>
-          </Dialog.Portal>
-        </Dialog.Root>
+        <div className="space-y-4">
+          <Button
+            variant="secondary"
+            className="w-full justify-center"
+            onClick={() => onOpenChange(!open)}
+          >
+            <PanelsTopLeft className="h-4 w-4" />
+            {copy.demo.mobileDrawerButton}
+          </Button>
+          <AnimatePresence initial={false}>
+            {open ? (
+              <motion.div
+                key="mobile-inline-drawer"
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                transition={{ duration: 0.22 }}
+                className="overflow-hidden rounded-[32px]"
+              >
+                <DrawerContent
+                  activeTab={activeTab}
+                  onTabChange={onTabChange}
+                  commonGround={commonGround}
+                  beyondLabelUnlocked={beyondLabelUnlocked}
+                  users={users}
+                  latestSuggestion={latestSuggestion}
+                  locale={locale}
+                />
+              </motion.div>
+            ) : null}
+          </AnimatePresence>
+        </div>
       </div>
 
       <button

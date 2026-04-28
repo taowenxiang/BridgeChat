@@ -70,8 +70,8 @@ export function AppShell({ aiConfigured }: AppShellProps) {
 
   const [messages, setMessages] = useState<ChatMessage[]>(seededMessages);
   const [draft, setDraft] = useState("");
-  const [drawerOpen, setDrawerOpen] = useState(true);
-  const [isDesktop, setIsDesktop] = useState(true);
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [isDesktop, setIsDesktop] = useState(false);
   const [activeTab, setActiveTab] = useState("common");
   const [isReplying, setIsReplying] = useState(false);
   const [progress, setProgress] = useState(initialProgress);
