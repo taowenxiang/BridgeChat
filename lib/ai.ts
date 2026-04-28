@@ -3,7 +3,7 @@ import type { BridgeChatContext, Suggestion, SuggestionKind } from "@/lib/types"
 
 export class AiDisabledError extends Error {
   constructor() {
-    super("OPENAI_API_KEY is not configured.");
+    super("No compatible LLM API key is configured.");
   }
 }
 
@@ -14,7 +14,33 @@ export class AiUnavailableError extends Error {
 }
 
 export function isAiConfigured() {
-  return Boolean(process.env.OPENAI_API_KEY);
+  return Boolean(resolveAiConfig().apiKey);
+}
+
+type ResolvedAiConfig = {
+  apiKey: string;
+  baseUrl: string;
+  model: string;
+};
+
+function stripTrailingSlash(value: string) {
+  return value.replace(/\/+$/, "");
+}
+
+function resolveAiConfig(): ResolvedAiConfig {
+  const apiKey = process.env.LLM_API_KEY ?? process.env.OPENAI_API_KEY ?? "";
+  const baseUrl = stripTrailingSlash(
+    process.env.LLM_BASE_URL ??
+      process.env.OPENAI_BASE_URL ??
+      "https://api.openai.com/v1",
+  );
+  const model = process.env.LLM_MODEL ?? process.env.OPENAI_MODEL ?? "gpt-5-mini";
+
+  return {
+    apiKey,
+    baseUrl,
+    model,
+  };
 }
 
 function extractOutputText(payload: any) {
@@ -34,21 +60,21 @@ function extractOutputText(payload: any) {
 }
 
 async function callOpenAi(kind: SuggestionKind | "reflection", context: BridgeChatContext) {
-  const apiKey = process.env.OPENAI_API_KEY;
+  const { apiKey, baseUrl, model } = resolveAiConfig();
   if (!apiKey) {
     throw new AiDisabledError();
   }
 
   const locale = context.locale ?? "en";
 
-  const response = await fetch("https://api.openai.com/v1/responses", {
+  const response = await fetch(`${baseUrl}/responses`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${apiKey}`,
     },
     body: JSON.stringify({
-      model: process.env.OPENAI_MODEL || "gpt-5-mini",
+      model,
       instructions: getPromptTemplate(kind, locale),
       input: [
         {
@@ -65,7 +91,7 @@ async function callOpenAi(kind: SuggestionKind | "reflection", context: BridgeCh
   });
 
   if (!response.ok) {
-    throw new Error(`OpenAI request failed with status ${response.status}`);
+    throw new Error(`LLM request failed with status ${response.status}`);
   }
 
   const payload = await response.json();
