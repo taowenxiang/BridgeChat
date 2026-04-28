@@ -71,6 +71,7 @@ export function AppShell({ aiConfigured }: AppShellProps) {
   const [messages, setMessages] = useState<ChatMessage[]>(seededMessages);
   const [draft, setDraft] = useState("");
   const [drawerOpen, setDrawerOpen] = useState(true);
+  const [isDesktop, setIsDesktop] = useState(true);
   const [activeTab, setActiveTab] = useState("common");
   const [isReplying, setIsReplying] = useState(false);
   const [progress, setProgress] = useState(initialProgress);
@@ -120,6 +121,24 @@ export function AppShell({ aiConfigured }: AppShellProps) {
     }
   }, [aiConfigured]);
 
+  useEffect(() => {
+    const mediaQuery = window.matchMedia("(min-width: 1280px)");
+
+    function syncDrawerMode(nextIsDesktop: boolean) {
+      setIsDesktop(nextIsDesktop);
+      setDrawerOpen(nextIsDesktop);
+    }
+
+    syncDrawerMode(mediaQuery.matches);
+
+    function handleChange(event: MediaQueryListEvent) {
+      syncDrawerMode(event.matches);
+    }
+
+    mediaQuery.addEventListener("change", handleChange);
+    return () => mediaQuery.removeEventListener("change", handleChange);
+  }, []);
+
   function schedule(fn: () => void, delay: number) {
     const timer = window.setTimeout(fn, delay);
     timersRef.current.push(timer);
@@ -145,6 +164,13 @@ export function AppShell({ aiConfigured }: AppShellProps) {
     };
   }
 
+  function revealResearchPanel(nextTab = "ask") {
+    setActiveTab(nextTab);
+    if (isDesktop) {
+      setDrawerOpen(true);
+    }
+  }
+
   function resetDemo(nextLocale?: Locale) {
     const targetLocale = nextLocale ?? locale;
     const targetMessages = getSeededMessages(targetLocale);
@@ -152,7 +178,7 @@ export function AppShell({ aiConfigured }: AppShellProps) {
     clearTimers();
     setMessages(targetMessages);
     setDraft("");
-    setDrawerOpen(true);
+    setDrawerOpen(isDesktop);
     setActiveTab("common");
     setIsReplying(false);
     setProgress(initialProgress);
@@ -235,8 +261,7 @@ export function AppShell({ aiConfigured }: AppShellProps) {
       return;
     }
 
-    setActiveTab("ask");
-    setDrawerOpen(true);
+    revealResearchPanel("ask");
     setAiNotice(null);
 
     if (kind === "go-deeper") {
@@ -325,8 +350,7 @@ export function AppShell({ aiConfigured }: AppShellProps) {
     setSuggestion(null);
     setDismissedAutoKey(null);
     setAiNotice(null);
-    setActiveTab("ask");
-    setDrawerOpen(true);
+    revealResearchPanel("ask");
   }
 
   function sendMessage(rawText?: string) {
@@ -394,9 +418,8 @@ export function AppShell({ aiConfigured }: AppShellProps) {
         totalNewMessages: current.totalNewMessages + 1,
       }));
       setIsReplying(false);
-      setDrawerOpen(true);
       if (unlockStateRef.current.beyondLabelUnlocked) {
-        setActiveTab("beyond");
+        revealResearchPanel("beyond");
       }
     }, 900);
   }
