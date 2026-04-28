@@ -72,7 +72,6 @@ export function AppShell({ aiConfigured }: AppShellProps) {
   const [messages, setMessages] = useState<ChatMessage[]>(seededMessages);
   const [draft, setDraft] = useState("");
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [isDesktop, setIsDesktop] = useState(false);
   const [demoGuideOpen, setDemoGuideOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("common");
   const [isReplying, setIsReplying] = useState(false);
@@ -123,24 +122,6 @@ export function AppShell({ aiConfigured }: AppShellProps) {
     }
   }, [aiConfigured]);
 
-  useEffect(() => {
-    const mediaQuery = window.matchMedia("(min-width: 1280px)");
-
-    function syncDrawerMode(nextIsDesktop: boolean) {
-      setIsDesktop(nextIsDesktop);
-      setDrawerOpen(nextIsDesktop);
-    }
-
-    syncDrawerMode(mediaQuery.matches);
-
-    function handleChange(event: MediaQueryListEvent) {
-      syncDrawerMode(event.matches);
-    }
-
-    mediaQuery.addEventListener("change", handleChange);
-    return () => mediaQuery.removeEventListener("change", handleChange);
-  }, []);
-
   function schedule(fn: () => void, delay: number) {
     const timer = window.setTimeout(fn, delay);
     timersRef.current.push(timer);
@@ -168,9 +149,6 @@ export function AppShell({ aiConfigured }: AppShellProps) {
 
   function revealResearchPanel(nextTab = "ask") {
     setActiveTab(nextTab);
-    if (isDesktop) {
-      setDrawerOpen(true);
-    }
   }
 
   function resetDemo(nextLocale?: Locale) {
@@ -180,7 +158,7 @@ export function AppShell({ aiConfigured }: AppShellProps) {
     clearTimers();
     setMessages(targetMessages);
     setDraft("");
-    setDrawerOpen(isDesktop);
+    setDrawerOpen(false);
     setDemoGuideOpen(false);
     setActiveTab("common");
     setIsReplying(false);
@@ -432,12 +410,25 @@ export function AppShell({ aiConfigured }: AppShellProps) {
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(160,231,216,0.35),transparent_35%),radial-gradient(circle_at_bottom_right,rgba(117,138,222,0.18),transparent_30%)]" />
       <ProgressUnlockBanner message={bannerMessage} />
 
-      <div className="relative mx-auto mb-4 flex w-full max-w-[1560px] items-center justify-between gap-3">
+      <div className="relative mx-auto mb-4 flex w-full max-w-[1320px] items-center justify-between gap-3">
         <div className="flex flex-wrap items-center gap-3">
           <Button variant="secondary" onClick={() => setDemoGuideOpen((current) => !current)}>
             <BookOpenText className="h-4 w-4" />
             Demo Guide
           </Button>
+          <div className="relative">
+            <UnderstandDrawer
+              open={drawerOpen}
+              onOpenChange={setDrawerOpen}
+              activeTab={activeTab}
+              onTabChange={setActiveTab}
+              commonGround={commonGround}
+              beyondLabelUnlocked={unlockState.beyondLabelUnlocked}
+              users={users}
+              latestSuggestion={suggestion}
+              locale={locale}
+            />
+          </div>
           <Button variant="secondary" onClick={() => resetDemo()}>
             <RotateCcw className="h-4 w-4" />
             {copy.demo.resetDemo}
@@ -446,7 +437,7 @@ export function AppShell({ aiConfigured }: AppShellProps) {
         <LanguageToggle />
       </div>
 
-      <div className="relative mx-auto flex w-full max-w-[1560px] flex-col gap-5 xl:flex-row">
+      <div className="relative mx-auto flex w-full max-w-[1320px] justify-center">
         <AnimatePresence initial={false}>
           {demoGuideOpen ? (
             <motion.aside
@@ -528,7 +519,7 @@ export function AppShell({ aiConfigured }: AppShellProps) {
           ) : null}
         </AnimatePresence>
 
-        <section className="relative min-w-0 flex-1 rounded-[34px] border border-[var(--border-strong)] bg-white/62 shadow-[0_22px_55px_rgba(15,23,42,0.08)] backdrop-blur">
+        <section className="relative min-w-0 w-full max-w-[980px] rounded-[34px] border border-[var(--border-strong)] bg-white/62 shadow-[0_22px_55px_rgba(15,23,42,0.08)] backdrop-blur">
           <ChatHeader users={users} locale={locale} />
           <div className="border-b border-[var(--border-soft)] px-6 py-5">
             {aiConfigured ? (
@@ -583,20 +574,6 @@ export function AppShell({ aiConfigured }: AppShellProps) {
             </div>
           </div>
         </section>
-
-        <div className="relative">
-          <UnderstandDrawer
-            open={drawerOpen}
-            onOpenChange={setDrawerOpen}
-            activeTab={activeTab}
-            onTabChange={setActiveTab}
-            commonGround={commonGround}
-            beyondLabelUnlocked={unlockState.beyondLabelUnlocked}
-            users={users}
-            latestSuggestion={suggestion}
-            locale={locale}
-          />
-        </div>
       </div>
     </main>
   );

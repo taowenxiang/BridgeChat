@@ -1,13 +1,12 @@
 "use client";
 
 import { AnimatePresence, motion } from "motion/react";
-import { ChevronLeft, PanelsTopLeft } from "lucide-react";
+import { PanelsTopLeft, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { UnderstandingTabs } from "@/components/bridgechat/UnderstandingTabs";
 import { getCopy } from "@/lib/copy";
 import type { DemoUser, Suggestion } from "@/lib/types";
-import { cn } from "@/lib/utils";
 
 type UnderstandDrawerProps = {
   open: boolean;
@@ -56,18 +55,32 @@ export function UnderstandDrawer({
   const copy = getCopy(locale);
 
   return (
-    <>
-      <div className="hidden xl:block">
-        <AnimatePresence mode="wait">
-          {open ? (
-            <motion.div
-              key="drawer-open"
-              initial={{ opacity: 0, x: 18 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: 18 }}
-              transition={{ duration: 0.28 }}
-              className="w-[360px] shrink-0"
-            >
+    <div className="space-y-4">
+      <Button variant="secondary" onClick={() => onOpenChange(!open)}>
+        <PanelsTopLeft className="h-4 w-4" />
+        {copy.drawerTitle}
+      </Button>
+
+      <AnimatePresence initial={false}>
+        {open ? (
+          <motion.aside
+            key="understand-panel"
+            initial={{ opacity: 0, x: 16, y: 4 }}
+            animate={{ opacity: 1, x: 0, y: 0 }}
+            exit={{ opacity: 0, x: 12, y: -4 }}
+            transition={{ duration: 0.22 }}
+            className="absolute right-0 top-[calc(100%+1rem)] z-20 w-[min(360px,calc(100vw-2rem))]"
+          >
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => onOpenChange(false)}
+                className="absolute right-4 top-4 z-10 inline-flex h-9 w-9 items-center justify-center rounded-full border border-[var(--border-strong)] bg-white/88 text-slate-400 shadow-sm transition hover:text-slate-700"
+                aria-label="Close understand more"
+              >
+                <X className="h-4 w-4" />
+              </button>
+
               <DrawerContent
                 activeTab={activeTab}
                 onTabChange={onTabChange}
@@ -77,75 +90,10 @@ export function UnderstandDrawer({
                 latestSuggestion={latestSuggestion}
                 locale={locale}
               />
-            </motion.div>
-          ) : (
-            <motion.div
-              key="drawer-collapsed"
-              initial={{ opacity: 0, x: 18 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: 18 }}
-              className="flex w-[78px] shrink-0 items-start justify-center"
-            >
-              <button
-                type="button"
-                onClick={() => onOpenChange(true)}
-                className="flex w-full flex-col items-center gap-4 rounded-[28px] border border-[var(--border-strong)] bg-white/72 px-3 py-5 text-slate-600 shadow-[0_18px_45px_rgba(15,23,42,0.08)] backdrop-blur transition hover:text-slate-950"
-              >
-                <PanelsTopLeft className="h-5 w-5" />
-                <span className="rotate-180 text-xs font-semibold uppercase tracking-[0.25em] [writing-mode:vertical-rl]">
-                  {copy.demo.mobileDrawerButton}
-                </span>
-              </button>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
-
-      <div className="xl:hidden">
-        <div className="space-y-4">
-          <Button
-            variant="secondary"
-            className="w-full justify-center"
-            onClick={() => onOpenChange(!open)}
-          >
-            <PanelsTopLeft className="h-4 w-4" />
-            {copy.demo.mobileDrawerButton}
-          </Button>
-          <AnimatePresence initial={false}>
-            {open ? (
-              <motion.div
-                key="mobile-inline-drawer"
-                initial={{ opacity: 0, y: 12 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -8 }}
-                transition={{ duration: 0.22 }}
-                className="overflow-hidden rounded-[32px]"
-              >
-                <DrawerContent
-                  activeTab={activeTab}
-                  onTabChange={onTabChange}
-                  commonGround={commonGround}
-                  beyondLabelUnlocked={beyondLabelUnlocked}
-                  users={users}
-                  latestSuggestion={latestSuggestion}
-                  locale={locale}
-                />
-              </motion.div>
-            ) : null}
-          </AnimatePresence>
-        </div>
-      </div>
-
-      <button
-        type="button"
-        onClick={() => onOpenChange(!open)}
-        className={cn(
-          "absolute right-[376px] top-4 hidden h-10 w-10 items-center justify-center rounded-full border border-[var(--border-strong)] bg-white/80 text-slate-500 shadow-sm transition hover:text-slate-950 xl:flex",
-          !open && "right-[92px]",
-        )}
-      >
-        <ChevronLeft className={cn("h-4 w-4 transition", !open && "rotate-180")} />
-      </button>
-    </>
+            </div>
+          </motion.aside>
+        ) : null}
+      </AnimatePresence>
+    </div>
   );
 }
