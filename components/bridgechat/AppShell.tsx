@@ -406,7 +406,7 @@ export function AppShell({ aiConfigured }: AppShellProps) {
   }
 
   return (
-    <main className="relative min-h-screen overflow-hidden px-4 py-6 md:px-6 lg:px-8">
+    <main className="relative h-screen overflow-hidden px-4 py-6 md:px-6 lg:px-8">
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(160,231,216,0.35),transparent_35%),radial-gradient(circle_at_bottom_right,rgba(117,138,222,0.18),transparent_30%)]" />
       <ProgressUnlockBanner message={bannerMessage} />
 
@@ -437,7 +437,7 @@ export function AppShell({ aiConfigured }: AppShellProps) {
         <LanguageToggle />
       </div>
 
-      <div className="relative mx-auto flex w-full max-w-[1320px] justify-center">
+      <div className="relative mx-auto flex h-[calc(100vh-7.5rem)] w-full max-w-[1320px] justify-center">
         <AnimatePresence initial={false}>
           {demoGuideOpen ? (
             <motion.aside
@@ -519,7 +519,7 @@ export function AppShell({ aiConfigured }: AppShellProps) {
           ) : null}
         </AnimatePresence>
 
-        <section className="relative min-w-0 w-full max-w-[980px] rounded-[34px] border border-[var(--border-strong)] bg-white/62 shadow-[0_22px_55px_rgba(15,23,42,0.08)] backdrop-blur">
+        <section className="relative flex min-h-0 w-full max-w-[980px] flex-col overflow-hidden rounded-[34px] border border-[var(--border-strong)] bg-white/62 shadow-[0_22px_55px_rgba(15,23,42,0.08)] backdrop-blur">
           <ChatHeader users={users} locale={locale} />
           <div className="border-b border-[var(--border-soft)] px-6 py-5">
             {aiConfigured ? (
@@ -536,7 +536,7 @@ export function AppShell({ aiConfigured }: AppShellProps) {
             )}
           </div>
 
-          <div className="grid gap-5 px-0 pb-6">
+          <div className="flex min-h-0 flex-1 flex-col">
             <ChatThread
               messages={messages}
               users={users}
@@ -548,7 +548,7 @@ export function AppShell({ aiConfigured }: AppShellProps) {
               onReply={aiConfigured ? selectReplyTarget : undefined}
             />
 
-            <div className="space-y-4 px-6">
+            <div className="shrink-0 space-y-4 border-t border-[var(--border-soft)] px-6 py-5">
               {aiNotice ? (
                 <div className="rounded-[24px] border border-[var(--border-strong)] bg-white/84 px-4 py-4 text-sm leading-6 text-slate-600 shadow-sm">
                   {aiNotice}

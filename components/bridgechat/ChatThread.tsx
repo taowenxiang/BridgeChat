@@ -36,7 +36,7 @@ export function ChatThread({
   }, [messages, isReplying]);
 
   return (
-    <div className="flex min-h-[430px] flex-1 flex-col gap-4 overflow-y-auto px-6 py-6">
+    <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-6 py-6">
       <AnimatePresence initial={false}>
         {messages.map((message) => (
           <motion.div
