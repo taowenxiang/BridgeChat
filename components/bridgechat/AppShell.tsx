@@ -2,7 +2,8 @@
 
 import { startTransition, useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { RotateCcw, Sparkles } from "lucide-react";
+import { BookOpenText, RotateCcw, Sparkles, X } from "lucide-react";
+import { AnimatePresence, motion } from "motion/react";
 
 import { ActionBar } from "@/components/bridgechat/ActionBar";
 import { ChatHeader } from "@/components/bridgechat/ChatHeader";
@@ -72,6 +73,7 @@ export function AppShell({ aiConfigured }: AppShellProps) {
   const [draft, setDraft] = useState("");
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [isDesktop, setIsDesktop] = useState(false);
+  const [demoGuideOpen, setDemoGuideOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("common");
   const [isReplying, setIsReplying] = useState(false);
   const [progress, setProgress] = useState(initialProgress);
@@ -179,6 +181,7 @@ export function AppShell({ aiConfigured }: AppShellProps) {
     setMessages(targetMessages);
     setDraft("");
     setDrawerOpen(isDesktop);
+    setDemoGuideOpen(false);
     setActiveTab("common");
     setIsReplying(false);
     setProgress(initialProgress);
@@ -429,77 +432,101 @@ export function AppShell({ aiConfigured }: AppShellProps) {
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(160,231,216,0.35),transparent_35%),radial-gradient(circle_at_bottom_right,rgba(117,138,222,0.18),transparent_30%)]" />
       <ProgressUnlockBanner message={bannerMessage} />
 
-      <div className="relative mx-auto mb-4 flex w-full max-w-[1560px] justify-end">
+      <div className="relative mx-auto mb-4 flex w-full max-w-[1560px] items-center justify-between gap-3">
+        <div className="flex flex-wrap items-center gap-3">
+          <Button variant="secondary" onClick={() => setDemoGuideOpen((current) => !current)}>
+            <BookOpenText className="h-4 w-4" />
+            Demo Guide
+          </Button>
+          <Button variant="secondary" onClick={() => resetDemo()}>
+            <RotateCcw className="h-4 w-4" />
+            {copy.demo.resetDemo}
+          </Button>
+        </div>
         <LanguageToggle />
       </div>
 
       <div className="relative mx-auto flex w-full max-w-[1560px] flex-col gap-5 xl:flex-row">
-        <aside className="w-full rounded-[34px] border border-[var(--border-strong)] bg-white/68 p-6 shadow-[0_18px_45px_rgba(15,23,42,0.07)] backdrop-blur xl:sticky xl:top-6 xl:w-[300px] xl:self-start">
-          <div className="flex items-center gap-3">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[var(--accent-glow)] text-[var(--accent-stronger)]">
-              <Sparkles className="h-5 w-5" />
-            </div>
-            <div>
-              <p className="text-sm font-semibold text-slate-950">{copy.title}</p>
-              <p className="text-sm text-slate-500">{copy.tagline}</p>
-            </div>
-          </div>
-
-          <p className="mt-5 text-sm leading-7 text-slate-600">{copy.railLine}</p>
-
-          <div className="mt-6 grid gap-3">
-            <Button variant="secondary" onClick={() => resetDemo()}>
-              <RotateCcw className="h-4 w-4" />
-              {copy.demo.resetDemo}
-            </Button>
-          </div>
-
-          <div className="mt-8 rounded-[28px] border border-[var(--border-strong)] bg-[var(--panel-muted)] p-5">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
-              {copy.designPrinciplesLabel}
-            </p>
-            <div className="mt-4 flex flex-wrap gap-2">
-              {copy.designPrincipleChips.map((chip) => (
-                <span
-                  key={chip}
-                  className="rounded-full border border-[var(--border-strong)] bg-white/80 px-3 py-1.5 text-xs font-medium text-slate-600"
-                >
-                  {chip}
-                </span>
-              ))}
-            </div>
-          </div>
-
-          <div className="mt-8 space-y-3">
-            {copy.demo.steps.map((step, index) => {
-              const active =
-                index === 0
-                  ? true
-                  : index === 1
-                    ? progress.userMessagesSent > 0
-                    : Boolean(replyTarget) ||
-                      messages.some((message) => Boolean(message.replyTo)) ||
-                      unlockState.beyondLabelUnlocked;
-
-              return (
-                <div
-                  key={step}
-                  className={`rounded-2xl border px-4 py-3 text-sm transition ${
-                    active
-                      ? "border-[var(--accent-soft)] bg-[var(--accent-glow)] text-[var(--accent-stronger)]"
-                      : "border-[var(--border-strong)] bg-white/70 text-slate-500"
-                  }`}
-                >
-                  {step}
+        <AnimatePresence initial={false}>
+          {demoGuideOpen ? (
+            <motion.aside
+              key="demo-guide-panel"
+              initial={{ opacity: 0, x: -16 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -12 }}
+              transition={{ duration: 0.22 }}
+              className="absolute left-0 top-0 z-20 w-full max-w-[320px] rounded-[34px] border border-[var(--border-strong)] bg-white/88 p-6 shadow-[0_24px_60px_rgba(15,23,42,0.12)] backdrop-blur"
+            >
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[var(--accent-glow)] text-[var(--accent-stronger)]">
+                    <Sparkles className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-slate-950">{copy.title}</p>
+                    <p className="text-sm text-slate-500">{copy.tagline}</p>
+                  </div>
                 </div>
-              );
-            })}
-          </div>
+                <button
+                  type="button"
+                  onClick={() => setDemoGuideOpen(false)}
+                  className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-[var(--border-strong)] bg-white/80 text-slate-400 transition hover:text-slate-700"
+                  aria-label="Close demo guide"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
 
-          <Link href="/" className="mt-6 inline-flex text-sm font-semibold text-[var(--accent-stronger)]">
-            {copy.demo.backToIntro}
-          </Link>
-        </aside>
+              <p className="mt-5 text-sm leading-7 text-slate-600">{copy.railLine}</p>
+
+              <div className="mt-8 rounded-[28px] border border-[var(--border-strong)] bg-[var(--panel-muted)] p-5">
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
+                  {copy.designPrinciplesLabel}
+                </p>
+                <div className="mt-4 flex flex-wrap gap-2">
+                  {copy.designPrincipleChips.map((chip) => (
+                    <span
+                      key={chip}
+                      className="rounded-full border border-[var(--border-strong)] bg-white/80 px-3 py-1.5 text-xs font-medium text-slate-600"
+                    >
+                      {chip}
+                    </span>
+                  ))}
+                </div>
+              </div>
+
+              <div className="mt-8 space-y-3">
+                {copy.demo.steps.map((step, index) => {
+                  const active =
+                    index === 0
+                      ? true
+                      : index === 1
+                        ? progress.userMessagesSent > 0
+                        : Boolean(replyTarget) ||
+                          messages.some((message) => Boolean(message.replyTo)) ||
+                          unlockState.beyondLabelUnlocked;
+
+                  return (
+                    <div
+                      key={step}
+                      className={`rounded-2xl border px-4 py-3 text-sm transition ${
+                        active
+                          ? "border-[var(--accent-soft)] bg-[var(--accent-glow)] text-[var(--accent-stronger)]"
+                          : "border-[var(--border-strong)] bg-white/70 text-slate-500"
+                      }`}
+                    >
+                      {step}
+                    </div>
+                  );
+                })}
+              </div>
+
+              <Link href="/" className="mt-6 inline-flex text-sm font-semibold text-[var(--accent-stronger)]">
+                {copy.demo.backToIntro}
+              </Link>
+            </motion.aside>
+          ) : null}
+        </AnimatePresence>
 
         <section className="relative min-w-0 flex-1 rounded-[34px] border border-[var(--border-strong)] bg-white/62 shadow-[0_22px_55px_rgba(15,23,42,0.08)] backdrop-blur">
           <ChatHeader users={users} locale={locale} />
