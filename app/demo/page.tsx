@@ -1,8 +1,5 @@
-import { AppShell } from "@/components/bridgechat/AppShell";
-import { isAiConfigured } from "@/lib/ai";
-
-export const dynamic = "force-dynamic";
+import { DemoShell } from "@/components/demo/DemoShell";
 
 export default function DemoPage() {
-  return <AppShell aiConfigured={isAiConfigured()} />;
+  return <DemoShell />;
 }
