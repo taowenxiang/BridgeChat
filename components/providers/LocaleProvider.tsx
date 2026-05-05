@@ -5,6 +5,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
 
@@ -20,12 +21,23 @@ const LocaleContext = createContext<LocaleContextValue | null>(null);
 
 export function LocaleProvider({ children }: { children: React.ReactNode }) {
   const [locale, setLocale] = useState<Locale>("en");
+  const previousDocumentLangRef = useRef<string | null>(null);
 
   useEffect(() => {
     const stored = window.localStorage.getItem("bridgechat-locale");
     if (stored === "en" || stored === "zh") {
       setLocale(stored);
     }
+  }, []);
+
+  useEffect(() => {
+    previousDocumentLangRef.current = document.documentElement.lang;
+
+    return () => {
+      if (previousDocumentLangRef.current !== null) {
+        document.documentElement.lang = previousDocumentLangRef.current;
+      }
+    };
   }, []);
 
   useEffect(() => {
