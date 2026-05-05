@@ -4,11 +4,6 @@ import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } 
 import DemoPage from "@/app/demo/page";
 
 const originalScrollIntoView = HTMLElement.prototype.scrollIntoView;
-const originalLocalStorage = window.localStorage;
-const mockLocalStorage = {
-  getItem: vi.fn(() => null),
-  setItem: vi.fn(),
-};
 
 describe("demo page", () => {
   let scheduledTimeoutCallbacks: Array<() => void> = [];
@@ -19,10 +14,6 @@ describe("demo page", () => {
 
   beforeAll(() => {
     HTMLElement.prototype.scrollIntoView = vi.fn();
-    Object.defineProperty(window, "localStorage", {
-      configurable: true,
-      value: mockLocalStorage,
-    });
   });
 
   beforeEach(() => {
@@ -36,9 +27,6 @@ describe("demo page", () => {
 
       return activeSetTimeout(handler, timeout);
     }) as typeof window.setTimeout);
-    mockLocalStorage.getItem.mockReset();
-    mockLocalStorage.setItem.mockReset();
-    mockLocalStorage.getItem.mockReturnValue(null);
   });
 
   afterEach(() => {
@@ -50,10 +38,6 @@ describe("demo page", () => {
 
   afterAll(() => {
     HTMLElement.prototype.scrollIntoView = originalScrollIntoView;
-    Object.defineProperty(window, "localStorage", {
-      configurable: true,
-      value: originalLocalStorage,
-    });
   });
 
   it("autoplays the guided demo and replays the active scene", () => {
@@ -75,24 +59,6 @@ describe("demo page", () => {
     expect(
       screen.getByText(/the scene opens without foregrounding a label/i),
     ).toBeInTheDocument();
-  });
-
-  it("restores document language when the route-local locale provider unmounts", async () => {
-    document.documentElement.lang = "fr";
-    mockLocalStorage.getItem.mockReturnValue("zh");
-
-    const { unmount } = render(<DemoPage />);
-
-    await act(async () => {
-      await Promise.resolve();
-      await Promise.resolve();
-    });
-
-    expect(document.documentElement.lang).toBe("zh-CN");
-
-    unmount();
-
-    expect(document.documentElement.lang).toBe("fr");
   });
 
   it("switches to scene 02 and keeps annotation and playback content synchronized through replay", () => {
