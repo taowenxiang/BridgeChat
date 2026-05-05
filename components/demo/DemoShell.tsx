@@ -13,14 +13,16 @@ import type { DemoSceneRuntime } from "@/lib/types";
 
 type DemoShellState = {
   activeSceneIndex: number;
+  playbackGeneration: number;
   runtime: DemoSceneRuntime;
 };
 
-function createDemoShellState(activeSceneIndex: number): DemoShellState {
+function createDemoShellState(activeSceneIndex: number, playbackGeneration = 0): DemoShellState {
   const scene = demoScenes[activeSceneIndex];
 
   return {
     activeSceneIndex,
+    playbackGeneration,
     runtime: createSceneRuntime(scene),
   };
 }
@@ -28,6 +30,7 @@ function createDemoShellState(activeSceneIndex: number): DemoShellState {
 export function DemoShell() {
   const [demoState, setDemoState] = useState(() => createDemoShellState(0));
   const activeScene = demoScenes[demoState.activeSceneIndex];
+  const playbackGeneration = demoState.playbackGeneration;
   const runtime = demoState.runtime;
 
   useEffect(() => {
@@ -41,9 +44,25 @@ export function DemoShell() {
       return;
     }
 
+    const timerOrigin = {
+      playbackGeneration,
+      sceneId: activeScene.id,
+      stepIndex: runtime.activeStepIndex,
+    };
+
     const timer = window.setTimeout(() => {
       setDemoState((currentState) => {
         const currentScene = demoScenes[currentState.activeSceneIndex];
+        const isStaleCallback =
+          currentState.playbackGeneration !== timerOrigin.playbackGeneration ||
+          currentState.runtime.sceneId !== timerOrigin.sceneId ||
+          currentState.runtime.activeStepIndex !== timerOrigin.stepIndex ||
+          currentScene.id !== timerOrigin.sceneId ||
+          currentState.runtime.status === "completed";
+
+        if (isStaleCallback) {
+          return currentState;
+        }
 
         return {
           ...currentState,
@@ -53,7 +72,7 @@ export function DemoShell() {
     }, activeStep.delayMs);
 
     return () => window.clearTimeout(timer);
-  }, [activeScene, runtime]);
+  }, [activeScene, playbackGeneration, runtime]);
 
   const visibleMessages = getVisibleMessages(runtime, activeScene);
 
@@ -81,12 +100,16 @@ export function DemoShell() {
             <AutoPlayControls
               onNextScene={() => {
                 setDemoState((currentState) =>
-                  createDemoShellState((currentState.activeSceneIndex + 1) % demoScenes.length),
+                  createDemoShellState(
+                    (currentState.activeSceneIndex + 1) % demoScenes.length,
+                    currentState.playbackGeneration + 1,
+                  ),
                 );
               }}
               onReplay={() => {
                 setDemoState((currentState) => ({
                   ...currentState,
+                  playbackGeneration: currentState.playbackGeneration + 1,
                   runtime: replayScene(currentState.runtime),
                 }));
               }}
@@ -100,7 +123,9 @@ export function DemoShell() {
                 const nextSceneIndex = demoScenes.findIndex((scene) => scene.id === sceneId);
 
                 if (nextSceneIndex >= 0) {
-                  setDemoState(createDemoShellState(nextSceneIndex));
+                  setDemoState((currentState) =>
+                    createDemoShellState(nextSceneIndex, currentState.playbackGeneration + 1),
+                  );
                 }
               }}
               scenes={demoScenes}
