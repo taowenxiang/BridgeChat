@@ -1,22 +1,18 @@
 export const demoCopy = {
   home: {
-    badge: "Guided demo",
+    badge: "Research prototype",
     title: "BridgeChat",
-    tagline: "From labels to warmer openings.",
+    tagline: "From labels to understanding",
     intro:
-      "A scripted walkthrough that shows how BridgeChat nudges conversations toward concrete shared context and richer follow-ups.",
-    cta: "Play the demo",
-    secondaryCta: "Review the principles",
-    principles: [
-      "Start from shared context before labels.",
-      "Keep AI cues lightweight and explainable.",
-      "Let the user own the final message.",
-    ],
+      "A guided class-demo showing how lightweight cues and better prompts can move a conversation beyond stereotype-driven assumptions.",
+    cta: "Enter Guided Demo",
+    secondaryCta: "Read Principles",
+    principles: ["Weak label", "Richer context", "Better prompts", "Shared understanding"],
   },
   demo: {
-    heading: "Guided conversation demo",
-    replay: "Replay scene",
-    nextScene: "Next scene",
+    heading: "Guided Demo",
+    replay: "Replay",
+    nextScene: "Next Scene",
     sceneLabel: "Scene",
   },
 } as const;
