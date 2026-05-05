@@ -55,6 +55,19 @@ describe("demo player", () => {
     expect(getVisibleMessages(afterCompletionAdvance, scene)).toHaveLength(4);
   });
 
+  it("uses the registered scene step count when totalSteps is omitted", () => {
+    const scene = demoScenes[0];
+    let runtime = createSceneRuntime(scene);
+
+    for (let index = 0; index < scene.steps.length; index += 1) {
+      runtime = advanceScene(runtime);
+    }
+
+    expect(runtime.status).toBe("completed");
+    expect(runtime.activeStepIndex).toBe(scene.steps.length - 1);
+    expect(getVisibleMessages(runtime, scene)).toHaveLength(4);
+  });
+
   it("plays through the second scene and rejects mismatched scene input", () => {
     const firstScene = demoScenes[0];
     const secondScene = demoScenes[1];
