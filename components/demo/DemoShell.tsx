@@ -9,19 +9,29 @@ import { SceneSwitcher } from "@/components/demo/SceneSwitcher";
 import { demoCopy } from "@/lib/demo-copy";
 import { advanceScene, createSceneRuntime, getVisibleMessages, replayScene } from "@/lib/demo-player";
 import { demoScenes } from "@/lib/demo-scenes";
+import type { DemoSceneRuntime } from "@/lib/types";
+
+type DemoShellState = {
+  activeSceneIndex: number;
+  runtime: DemoSceneRuntime;
+};
+
+function createDemoShellState(activeSceneIndex: number): DemoShellState {
+  const scene = demoScenes[activeSceneIndex];
+
+  return {
+    activeSceneIndex,
+    runtime: createSceneRuntime(scene),
+  };
+}
 
 export function DemoShell() {
-  const [activeSceneIndex, setActiveSceneIndex] = useState(0);
-  const activeScene = demoScenes[activeSceneIndex];
-  const [runtime, setRuntime] = useState(() => createSceneRuntime(activeScene));
-  const activeStepIndex = runtime.sceneId === activeScene.id ? runtime.activeStepIndex : 0;
+  const [demoState, setDemoState] = useState(() => createDemoShellState(0));
+  const activeScene = demoScenes[demoState.activeSceneIndex];
+  const runtime = demoState.runtime;
 
   useEffect(() => {
-    setRuntime(createSceneRuntime(activeScene));
-  }, [activeScene]);
-
-  useEffect(() => {
-    if (runtime.sceneId !== activeScene.id || runtime.status === "completed") {
+    if (runtime.status === "completed") {
       return;
     }
 
@@ -32,7 +42,14 @@ export function DemoShell() {
     }
 
     const timer = window.setTimeout(() => {
-      setRuntime((currentRuntime) => advanceScene(currentRuntime, activeScene.steps.length));
+      setDemoState((currentState) => {
+        const currentScene = demoScenes[currentState.activeSceneIndex];
+
+        return {
+          ...currentState,
+          runtime: advanceScene(currentState.runtime, currentScene.steps.length),
+        };
+      });
     }, activeStep.delayMs);
 
     return () => window.clearTimeout(timer);
@@ -63,10 +80,15 @@ export function DemoShell() {
 
             <AutoPlayControls
               onNextScene={() => {
-                setActiveSceneIndex((currentIndex) => (currentIndex + 1) % demoScenes.length);
+                setDemoState((currentState) =>
+                  createDemoShellState((currentState.activeSceneIndex + 1) % demoScenes.length),
+                );
               }}
               onReplay={() => {
-                setRuntime((currentRuntime) => replayScene(currentRuntime));
+                setDemoState((currentState) => ({
+                  ...currentState,
+                  runtime: replayScene(currentState.runtime),
+                }));
               }}
             />
           </div>
@@ -78,7 +100,7 @@ export function DemoShell() {
                 const nextSceneIndex = demoScenes.findIndex((scene) => scene.id === sceneId);
 
                 if (nextSceneIndex >= 0) {
-                  setActiveSceneIndex(nextSceneIndex);
+                  setDemoState(createDemoShellState(nextSceneIndex));
                 }
               }}
               scenes={demoScenes}
@@ -87,7 +109,7 @@ export function DemoShell() {
         </header>
 
         <section className="grid gap-6 xl:grid-cols-[320px_minmax(0,1fr)]">
-          <AnnotationRail activeStepIndex={activeStepIndex} steps={activeScene.steps} />
+          <AnnotationRail activeStepIndex={runtime.activeStepIndex} steps={activeScene.steps} />
           <ChatStage scene={activeScene} visibleMessages={visibleMessages} />
         </section>
       </div>

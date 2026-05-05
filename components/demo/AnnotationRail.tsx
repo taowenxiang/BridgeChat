@@ -20,6 +20,7 @@ export function AnnotationRail({ steps, activeStepIndex }: AnnotationRailProps) 
 
           return (
             <li
+              aria-current={isActive ? "step" : undefined}
               key={step.id}
               className={cn(
                 "rounded-[24px] border p-4 transition",

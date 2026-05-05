@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
 import DemoPage from "@/app/demo/page";
@@ -27,6 +27,7 @@ describe("demo page", () => {
   });
 
   afterEach(() => {
+    cleanup();
     vi.runOnlyPendingTimers();
     vi.useRealTimers();
   });
@@ -58,5 +59,56 @@ describe("demo page", () => {
     expect(
       screen.getByText(/the scene opens without foregrounding a label/i),
     ).toBeInTheDocument();
+  });
+
+  it("switches to scene 02 and keeps annotation and playback content synchronized through replay", () => {
+    render(<DemoPage />);
+
+    fireEvent.click(screen.getByRole("button", { name: /next scene/i }));
+
+    expect(
+      screen.getByRole("heading", { level: 1, name: /ai-guided deeper cue/i }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/a real-life moment creates the opening/i),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/a real-life moment creates the opening/i).closest("li"),
+    ).toHaveAttribute("aria-current", "step");
+    expect(
+      screen.getByText(/救命！昨天赶了 5 个 DDL/i),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText(/the assistant spots an opening around coping style/i),
+    ).not.toBeInTheDocument();
+
+    act(() => {
+      vi.advanceTimersByTime(1300);
+    });
+
+    expect(
+      screen.getByText(/ai extracts a deeper cue/i),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/ai extracts a deeper cue/i).closest("li"),
+    ).toHaveAttribute("aria-current", "step");
+    expect(
+      screen.getByText(/the assistant spots an opening around coping style/i),
+    ).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: /replay/i }));
+
+    expect(
+      screen.getByText(/a real-life moment creates the opening/i),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/a real-life moment creates the opening/i).closest("li"),
+    ).toHaveAttribute("aria-current", "step");
+    expect(
+      screen.getByText(/救命！昨天赶了 5 个 DDL/i),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText(/the assistant spots an opening around coping style/i),
+    ).not.toBeInTheDocument();
   });
 });
