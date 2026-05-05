@@ -1,6 +1,8 @@
 export type Locale = "en" | "zh";
 export type AssistantMode = "scripted" | "live";
 export type ExperienceMode = "standard" | "video";
+
+// Legacy video-script identifiers for the older multi-mode prototype.
 export type VideoScene = "shared-interest" | "ai-guidance";
 
 export type DemoUser = {
@@ -68,6 +70,7 @@ export type BridgeChatContext = {
 
 export type AiApiStatus = "ok" | "disabled" | "unavailable";
 
+// Guided-demo scene types for the Task 1 scripted runtime.
 export type DemoSceneId = "shared-interest" | "ai-guided-deeper-cue";
 
 export type DemoChatMessage = {
