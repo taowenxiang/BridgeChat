@@ -42,4 +42,5 @@ export type DemoSceneRuntime = {
   sceneId: DemoSceneId;
   status: "playing" | "completed";
   activeStepIndex: number;
+  totalSteps: number;
 };

@@ -35,15 +35,7 @@ function readCookieLocale(): Locale | null {
   return null;
 }
 
-function readStoredLocale(initialLocale?: Locale): Locale {
-  if (typeof window === "undefined") {
-    return initialLocale ?? "zh";
-  }
-
-  if (initialLocale) {
-    return initialLocale;
-  }
-
+function readPersistedLocale(): Locale | null {
   const cookieLocale = readCookieLocale();
 
   if (cookieLocale) {
@@ -53,9 +45,17 @@ function readStoredLocale(initialLocale?: Locale): Locale {
   try {
     const storedLocale = window.localStorage.getItem(LOCALE_STORAGE_KEY);
 
-    return storedLocale === "en" ? "en" : "zh";
+    if (storedLocale === "en") {
+      return "en";
+    }
+
+    if (storedLocale === "zh") {
+      return "zh";
+    }
+
+    return null;
   } catch {
-    return initialLocale ?? "zh";
+    return null;
   }
 }
 
@@ -76,12 +76,32 @@ export function LocaleProvider({
   children: React.ReactNode;
   initialLocale?: Locale;
 }) {
-  const [locale, setLocale] = useState<Locale>(() => readStoredLocale(initialLocale));
+  const [locale, setLocale] = useState<Locale>(initialLocale ?? "zh");
+  const [isClientLocaleReady, setIsClientLocaleReady] = useState(initialLocale !== undefined);
 
   useEffect(() => {
-    persistLocale(locale);
+    if (initialLocale !== undefined) {
+      return;
+    }
+
+    const persistedLocale = readPersistedLocale();
+
+    if (persistedLocale) {
+      setLocale(persistedLocale);
+    }
+
+    setIsClientLocaleReady(true);
+  }, [initialLocale]);
+
+  useEffect(() => {
     document.documentElement.lang = locale === "zh" ? "zh-CN" : "en";
-  }, [locale]);
+
+    if (!isClientLocaleReady) {
+      return;
+    }
+
+    persistLocale(locale);
+  }, [isClientLocaleReady, locale]);
 
   return (
     <LocaleContext.Provider value={{ locale, setLocale }}>

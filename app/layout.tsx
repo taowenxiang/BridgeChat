@@ -11,8 +11,16 @@ export const metadata: Metadata = {
   description: "Guided research demo from labels to understanding.",
 };
 
-function resolveInitialLocale(localeCookie?: string): Locale {
-  return localeCookie === "en" ? "en" : "zh";
+export function resolveInitialLocale(localeCookie?: string): Locale | undefined {
+  if (localeCookie === "en") {
+    return "en";
+  }
+
+  if (localeCookie === "zh") {
+    return "zh";
+  }
+
+  return undefined;
 }
 
 export default async function RootLayout({
@@ -24,7 +32,7 @@ export default async function RootLayout({
   const initialLocale = resolveInitialLocale(cookieStore.get("bridgechat-locale")?.value);
 
   return (
-    <html lang={initialLocale === "zh" ? "zh-CN" : "en"}>
+    <html lang={(initialLocale ?? "zh") === "zh" ? "zh-CN" : "en"}>
       <body className="antialiased">
         <LocaleProvider initialLocale={initialLocale}>{children}</LocaleProvider>
       </body>

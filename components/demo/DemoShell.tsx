@@ -19,8 +19,8 @@ type DemoShellState = {
   runtime: DemoSceneRuntime;
 };
 
-function createDemoShellState(activeSceneIndex: number, playbackGeneration = 0): DemoShellState {
-  const scene = getDemoScenes("zh")[activeSceneIndex];
+function createDemoShellState(activeSceneIndex: number, scenes: ReturnType<typeof getDemoScenes>, playbackGeneration = 0): DemoShellState {
+  const scene = scenes[activeSceneIndex];
 
   return {
     activeSceneIndex,
@@ -33,7 +33,7 @@ export function DemoShell() {
   const { locale } = useLocale();
   const copy = getCopy(locale).demo;
   const scenes = getDemoScenes(locale);
-  const [demoState, setDemoState] = useState(() => createDemoShellState(0));
+  const [demoState, setDemoState] = useState(() => createDemoShellState(0, scenes));
   const activeScene = scenes[demoState.activeSceneIndex];
   const playbackGeneration = demoState.playbackGeneration;
   const runtime = demoState.runtime;
@@ -109,6 +109,7 @@ export function DemoShell() {
                   setDemoState((currentState) =>
                     createDemoShellState(
                       (currentState.activeSceneIndex + 1) % scenes.length,
+                      scenes,
                       currentState.playbackGeneration + 1,
                     ),
                   );
@@ -133,7 +134,7 @@ export function DemoShell() {
 
                 if (nextSceneIndex >= 0) {
                   setDemoState((currentState) =>
-                    createDemoShellState(nextSceneIndex, currentState.playbackGeneration + 1),
+                    createDemoShellState(nextSceneIndex, scenes, currentState.playbackGeneration + 1),
                   );
                 }
               }}

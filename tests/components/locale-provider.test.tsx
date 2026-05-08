@@ -70,6 +70,19 @@ describe("LocaleProvider", () => {
     expect(document.documentElement.lang).toBe("en");
   });
 
+  it("starts from zh and then hydrates from localStorage when no server locale is provided", () => {
+    window.localStorage.setItem("bridgechat-locale", "en");
+
+    render(
+      <LocaleProvider>
+        <LocaleProbe />
+      </LocaleProvider>,
+    );
+
+    expect(screen.getByTestId("locale-value")).toHaveTextContent("en");
+    expect(document.documentElement.lang).toBe("en");
+  });
+
   it("persists the selected locale across remounts", () => {
     const firstRender = render(
       <LocaleProvider>
