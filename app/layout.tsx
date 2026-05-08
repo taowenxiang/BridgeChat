@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 
+import { LocaleProvider } from "@/components/providers/LocaleProvider";
+
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -13,8 +15,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body className="antialiased">{children}</body>
+    <html lang="zh-CN">
+      <body className="antialiased">
+        <LocaleProvider>{children}</LocaleProvider>
+      </body>
     </html>
   );
 }
