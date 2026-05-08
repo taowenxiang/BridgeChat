@@ -18,7 +18,7 @@ export function getDemoScenes(locale: Locale): DemoScene[] {
         {
           id: "s1-peer-1",
           sender: "peer",
-          text: "你好呀",
+          text: isZh ? "你好呀" : "Hey, hi!",
           sentAt: "10:10",
         },
         {
@@ -113,7 +113,9 @@ export function getDemoScenes(locale: Locale): DemoScene[] {
         {
           id: "s2-peer-1",
           sender: "peer",
-          text: "救命！昨天赶了 5 个 DDL，熬到凌晨，今天整个人都废了😫",
+          text: isZh
+            ? "救命！昨天赶了 5 个 DDL，熬到凌晨，今天整个人都废了😫"
+            : "Help. I pushed through five deadlines last night and stayed up until dawn, and now I am completely wiped 😫",
           sentAt: "22:18",
         },
         {

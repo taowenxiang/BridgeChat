@@ -1,17 +1,27 @@
+"use client";
+
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 
+import { useLocale } from "@/components/providers/LocaleProvider";
+import { LocaleToggle } from "@/components/shared/LocaleToggle";
 import { Button } from "@/components/ui/button";
-import { demoCopy } from "@/lib/demo-copy";
+import { getCopy } from "@/lib/demo-copy";
 
 export function HomeHero() {
-  const copy = demoCopy.home;
+  const { locale } = useLocale();
+  const copy = getCopy(locale).home;
 
   return (
     <section className="relative overflow-hidden rounded-[36px] border border-[var(--border-soft)] bg-[rgba(255,255,255,0.78)] px-6 py-8 shadow-[0_24px_70px_rgba(17,32,42,0.08)] backdrop-blur md:px-10 md:py-12">
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(154,208,193,0.28),transparent_36%),radial-gradient(circle_at_bottom_right,rgba(31,107,99,0.12),transparent_34%)]" />
 
-      <div className="relative max-w-3xl">
+      <div className="relative">
+        <div className="flex justify-end">
+          <LocaleToggle />
+        </div>
+
+        <div className="mt-4 max-w-3xl">
         <p className="inline-flex rounded-full border border-[var(--border-strong)] bg-[var(--accent-glow)] px-4 py-2 text-sm font-semibold tracking-[0.08em] text-[var(--accent-stronger)] uppercase">
           {copy.badge}
         </p>
@@ -36,6 +46,7 @@ export function HomeHero() {
           <Button asChild variant="secondary" size="lg">
             <a href="#principles">{copy.secondaryCta}</a>
           </Button>
+        </div>
         </div>
       </div>
     </section>

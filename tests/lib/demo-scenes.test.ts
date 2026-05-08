@@ -24,6 +24,8 @@ describe("getDemoScenes", () => {
 
     expect(zhScenes[0].title).toBe("共同兴趣破冰");
     expect(enScenes[0].title).toBe("Shared-interest icebreaker");
+    expect(zhScenes[0].messages[0].text).toBe("你好呀");
+    expect(enScenes[0].messages[0].text).toBe("Hey, hi!");
     expect(zhScenes[0].messages[1].text).toBe(
       "系统注意到一个共同兴趣点，并且刻意把它保持成轻量提示。",
     );
@@ -32,5 +34,9 @@ describe("getDemoScenes", () => {
     );
     expect(zhScenes[0].messages[3].media?.alt).toBe("秋秋的照片");
     expect(enScenes[0].messages[3].media?.alt).toBe("Photo of Qiuqiu");
+    expect(zhScenes[1].messages[0].text).toBe("救命！昨天赶了 5 个 DDL，熬到凌晨，今天整个人都废了😫");
+    expect(enScenes[1].messages[0].text).toBe(
+      "Help. I pushed through five deadlines last night and stayed up until dawn, and now I am completely wiped 😫",
+    );
   });
 });

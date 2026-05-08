@@ -3,10 +3,15 @@ import { describe, expect, it } from "vitest";
 
 import DemoPage from "@/app/demo/page";
 import HomePage from "@/app/page";
+import { LocaleProvider } from "@/components/providers/LocaleProvider";
 
 describe("regression smoke", () => {
   it("keeps the final reduced app focused on the concept-first landing page and guided demo", () => {
-    render(<HomePage />);
+    render(
+      <LocaleProvider initialLocale="en">
+        <HomePage />
+      </LocaleProvider>,
+    );
 
     expect(
       screen.getByRole("heading", { level: 1, name: /bridgechat/i }),
@@ -17,7 +22,11 @@ describe("regression smoke", () => {
     expect(screen.queryByText(/language/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/launch demo/i)).not.toBeInTheDocument();
 
-    render(<DemoPage />);
+    render(
+      <LocaleProvider initialLocale="en">
+        <DemoPage />
+      </LocaleProvider>,
+    );
 
     expect(
       screen.getByRole("heading", { level: 1, name: /shared-interest icebreaker/i }),
