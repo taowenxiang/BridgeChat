@@ -1,3 +1,5 @@
+export type Locale = "zh" | "en";
+
 export type DemoSceneId = "shared-interest" | "ai-guided-deeper-cue";
 
 export type DemoChatMessage = {
@@ -40,4 +42,5 @@ export type DemoSceneRuntime = {
   sceneId: DemoSceneId;
   status: "playing" | "completed";
   activeStepIndex: number;
+  totalSteps: number;
 };

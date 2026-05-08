@@ -6,9 +6,11 @@ import { AnnotationRail } from "@/components/demo/AnnotationRail";
 import { AutoPlayControls } from "@/components/demo/AutoPlayControls";
 import { ChatStage } from "@/components/demo/ChatStage";
 import { SceneSwitcher } from "@/components/demo/SceneSwitcher";
-import { demoCopy } from "@/lib/demo-copy";
+import { useLocale } from "@/components/providers/LocaleProvider";
+import { LocaleToggle } from "@/components/shared/LocaleToggle";
+import { getCopy } from "@/lib/demo-copy";
 import { advanceScene, createSceneRuntime, getVisibleMessages, replayScene } from "@/lib/demo-player";
-import { demoScenes } from "@/lib/demo-scenes";
+import { getDemoScenes } from "@/lib/demo-scenes";
 import type { DemoSceneRuntime } from "@/lib/types";
 
 type DemoShellState = {
@@ -17,8 +19,8 @@ type DemoShellState = {
   runtime: DemoSceneRuntime;
 };
 
-function createDemoShellState(activeSceneIndex: number, playbackGeneration = 0): DemoShellState {
-  const scene = demoScenes[activeSceneIndex];
+function createDemoShellState(activeSceneIndex: number, scenes: ReturnType<typeof getDemoScenes>, playbackGeneration = 0): DemoShellState {
+  const scene = scenes[activeSceneIndex];
 
   return {
     activeSceneIndex,
@@ -28,8 +30,11 @@ function createDemoShellState(activeSceneIndex: number, playbackGeneration = 0):
 }
 
 export function DemoShell() {
-  const [demoState, setDemoState] = useState(() => createDemoShellState(0));
-  const activeScene = demoScenes[demoState.activeSceneIndex];
+  const { locale } = useLocale();
+  const copy = getCopy(locale).demo;
+  const scenes = getDemoScenes(locale);
+  const [demoState, setDemoState] = useState(() => createDemoShellState(0, scenes));
+  const activeScene = scenes[demoState.activeSceneIndex];
   const playbackGeneration = demoState.playbackGeneration;
   const runtime = demoState.runtime;
 
@@ -52,7 +57,7 @@ export function DemoShell() {
 
     const timer = window.setTimeout(() => {
       setDemoState((currentState) => {
-        const currentScene = demoScenes[currentState.activeSceneIndex];
+        const currentScene = scenes[currentState.activeSceneIndex];
         const isStaleCallback =
           currentState.playbackGeneration !== timerOrigin.playbackGeneration ||
           currentState.runtime.sceneId !== timerOrigin.sceneId ||
@@ -72,7 +77,7 @@ export function DemoShell() {
     }, activeStep.delayMs);
 
     return () => window.clearTimeout(timer);
-  }, [activeScene, playbackGeneration, runtime]);
+  }, [activeScene, playbackGeneration, runtime, scenes]);
 
   const visibleMessages = getVisibleMessages(runtime, activeScene);
 
@@ -89,53 +94,70 @@ export function DemoShell() {
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--accent-stronger)]">
-                {demoCopy.demo.heading}
+                {copy.heading}
               </p>
               <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600 md:text-base">
-                A scripted walkthrough showing how lightweight context cues and AI guidance can move a
-                conversation forward without reducing people to labels.
+                {copy.intro}
               </p>
             </div>
 
-            <AutoPlayControls
-              onNextScene={() => {
-                setDemoState((currentState) =>
-                  createDemoShellState(
-                    (currentState.activeSceneIndex + 1) % demoScenes.length,
-                    currentState.playbackGeneration + 1,
-                  ),
-                );
-              }}
-              onReplay={() => {
-                setDemoState((currentState) => ({
-                  ...currentState,
-                  playbackGeneration: currentState.playbackGeneration + 1,
-                  runtime: replayScene(currentState.runtime),
-                }));
-              }}
-            />
+            <div className="flex flex-wrap items-center gap-3">
+              <LocaleToggle />
+              <AutoPlayControls
+                nextSceneLabel={copy.nextScene}
+                onNextScene={() => {
+                  setDemoState((currentState) =>
+                    createDemoShellState(
+                      (currentState.activeSceneIndex + 1) % scenes.length,
+                      scenes,
+                      currentState.playbackGeneration + 1,
+                    ),
+                  );
+                }}
+                onReplay={() => {
+                  setDemoState((currentState) => ({
+                    ...currentState,
+                    playbackGeneration: currentState.playbackGeneration + 1,
+                    runtime: replayScene(currentState.runtime),
+                  }));
+                }}
+                replayLabel={copy.replay}
+              />
+            </div>
           </div>
 
           <div className="mt-4">
             <SceneSwitcher
               activeSceneId={activeScene.id}
               onSelectScene={(sceneId) => {
-                const nextSceneIndex = demoScenes.findIndex((scene) => scene.id === sceneId);
+                const nextSceneIndex = scenes.findIndex((scene) => scene.id === sceneId);
 
                 if (nextSceneIndex >= 0) {
                   setDemoState((currentState) =>
-                    createDemoShellState(nextSceneIndex, currentState.playbackGeneration + 1),
+                    createDemoShellState(nextSceneIndex, scenes, currentState.playbackGeneration + 1),
                   );
                 }
               }}
-              scenes={demoScenes}
+              sceneLabel={copy.sceneLabel}
+              scenes={scenes}
             />
           </div>
         </header>
 
         <section className="grid gap-6 xl:grid-cols-[320px_minmax(0,1fr)]">
-          <AnnotationRail activeStepIndex={runtime.activeStepIndex} steps={activeScene.steps} />
-          <ChatStage scene={activeScene} visibleMessages={visibleMessages} />
+          <AnnotationRail
+            activeStepIndex={runtime.activeStepIndex}
+            heading={copy.annotationHeading}
+            stepLabel={copy.stepLabel}
+            steps={activeScene.steps}
+          />
+          <ChatStage
+            chatStageHeading={copy.chatStageHeading}
+            livePlaybackLabel={copy.livePlayback}
+            scene={activeScene}
+            visibleMessages={visibleMessages}
+            waitingLabel={copy.waiting}
+          />
         </section>
       </div>
     </main>

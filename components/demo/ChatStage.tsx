@@ -8,6 +8,9 @@ import type { DemoChatMessage, DemoScene } from "@/lib/types";
 type ChatStageProps = {
   scene: DemoScene;
   visibleMessages: DemoChatMessage[];
+  chatStageHeading: string;
+  livePlaybackLabel: string;
+  waitingLabel: string;
 };
 
 function MessageCard({ message }: { message: DemoChatMessage }) {
@@ -67,7 +70,13 @@ function MessageCard({ message }: { message: DemoChatMessage }) {
   );
 }
 
-export function ChatStage({ scene, visibleMessages }: ChatStageProps) {
+export function ChatStage({
+  scene,
+  visibleMessages,
+  chatStageHeading,
+  livePlaybackLabel,
+  waitingLabel,
+}: ChatStageProps) {
   return (
     <section className="rounded-[34px] border border-[var(--border-soft)] bg-[rgba(255,255,255,0.86)] p-5 shadow-[0_24px_70px_rgba(17,32,42,0.08)] backdrop-blur md:p-6">
       <div className="rounded-[28px] border border-[var(--border-soft)] bg-[linear-gradient(180deg,rgba(244,252,249,0.95),rgba(255,255,255,0.94))] p-5">
@@ -81,18 +90,18 @@ export function ChatStage({ scene, visibleMessages }: ChatStageProps) {
       <div className="mt-5 rounded-[28px] border border-[var(--border-soft)] bg-[linear-gradient(180deg,rgba(255,255,255,0.92),rgba(244,248,247,0.96))] p-4 md:p-5">
         <div className="flex items-center justify-between gap-3 border-b border-[var(--border-soft)] pb-4">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Chat stage</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">{chatStageHeading}</p>
             <p className="mt-1 text-sm text-slate-600">{scene.purpose}</p>
           </div>
           <div className="rounded-full border border-[var(--border-strong)] bg-white/80 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
-            Live playback
+            {livePlaybackLabel}
           </div>
         </div>
 
         <ul className="mt-5 space-y-3">
           {visibleMessages.length === 0 ? (
             <li className="rounded-[24px] border border-dashed border-[var(--border-strong)] bg-white/70 px-4 py-6 text-sm leading-6 text-slate-500">
-              Waiting for the opening cue to arrive.
+              {waitingLabel}
             </li>
           ) : null}
 

@@ -7,12 +7,13 @@ type SceneSwitcherProps = {
   scenes: DemoScene[];
   activeSceneId: DemoSceneId;
   onSelectScene: (sceneId: DemoSceneId) => void;
+  sceneLabel: string;
 };
 
-export function SceneSwitcher({ scenes, activeSceneId, onSelectScene }: SceneSwitcherProps) {
+export function SceneSwitcher({ scenes, activeSceneId, onSelectScene, sceneLabel }: SceneSwitcherProps) {
   return (
     <div className="flex flex-wrap gap-3">
-      {scenes.map((scene) => {
+      {scenes.map((scene, index) => {
         const isActive = scene.id === activeSceneId;
 
         return (
@@ -28,7 +29,7 @@ export function SceneSwitcher({ scenes, activeSceneId, onSelectScene }: SceneSwi
             onClick={() => onSelectScene(scene.id)}
             type="button"
           >
-            {`${scene.eyebrow} · ${scene.title}`}
+            {`${sceneLabel} ${String(index + 1).padStart(2, "0")} · ${scene.title}`}
           </button>
         );
       })}

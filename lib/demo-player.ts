@@ -1,14 +1,6 @@
-import { demoScenes } from "@/lib/demo-scenes";
 import type { DemoScene, DemoSceneRuntime } from "@/lib/types";
 
-// Guided-demo scene registry used to make the default advance path safe.
-const demoScenesById = new Map(demoScenes.map((scene) => [scene.id, scene] as const));
-
 function normalizeTotalSteps(totalSteps: number) {
-  if (!Number.isFinite(totalSteps)) {
-    return Number.MAX_SAFE_INTEGER;
-  }
-
   return Math.max(Math.floor(totalSteps), 0);
 }
 
@@ -20,33 +12,17 @@ function clampStepIndex(stepIndex: number, totalSteps: number) {
   return Math.min(Math.max(stepIndex, 0), totalSteps - 1);
 }
 
-function resolveTotalSteps(runtime: DemoSceneRuntime, totalSteps: number) {
-  if (totalSteps !== Number.MAX_SAFE_INTEGER) {
-    return normalizeTotalSteps(totalSteps);
-  }
-
-  const registeredScene = demoScenesById.get(runtime.sceneId);
-
-  if (!registeredScene) {
-    return normalizeTotalSteps(totalSteps);
-  }
-
-  return normalizeTotalSteps(registeredScene.steps.length);
-}
-
 export function createSceneRuntime(scene: DemoScene): DemoSceneRuntime {
   return {
     sceneId: scene.id,
     status: "playing",
     activeStepIndex: 0,
+    totalSteps: scene.steps.length,
   };
 }
 
-export function advanceScene(
-  runtime: DemoSceneRuntime,
-  totalSteps = Number.MAX_SAFE_INTEGER,
-): DemoSceneRuntime {
-  const normalizedTotalSteps = resolveTotalSteps(runtime, totalSteps);
+export function advanceScene(runtime: DemoSceneRuntime, totalSteps = runtime.totalSteps): DemoSceneRuntime {
+  const normalizedTotalSteps = normalizeTotalSteps(totalSteps);
   const lastStepIndex = clampStepIndex(runtime.activeStepIndex, normalizedTotalSteps);
 
   if (runtime.status === "completed") {
@@ -71,6 +47,7 @@ export function advanceScene(
   return {
     ...runtime,
     status: isCompleted ? "completed" : "playing",
+    totalSteps: normalizedTotalSteps,
     activeStepIndex: isCompleted
       ? normalizedTotalSteps - 1
       : clampStepIndex(nextStepIndex, normalizedTotalSteps),

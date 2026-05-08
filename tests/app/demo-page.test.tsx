@@ -2,6 +2,7 @@ import { act, cleanup, fireEvent, render, screen } from "@testing-library/react"
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
 import DemoPage from "@/app/demo/page";
+import { LocaleProvider } from "@/components/providers/LocaleProvider";
 
 const originalScrollIntoView = HTMLElement.prototype.scrollIntoView;
 
@@ -41,28 +42,62 @@ describe("demo page", () => {
   });
 
   it("autoplays the guided demo and replays the active scene", () => {
-    render(<DemoPage />);
+    render(
+      <LocaleProvider>
+        <DemoPage />
+      </LocaleProvider>,
+    );
 
     expect(
-      screen.getByRole("heading", { level: 1, name: /shared-interest icebreaker/i }),
+      screen.getByRole("heading", { level: 1, name: /共同兴趣破冰/i }),
     ).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /replay/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /重播/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /switch to english/i })).toHaveTextContent("EN");
 
     act(() => {
       vi.advanceTimersByTime(2000);
     });
 
-    expect(screen.getByText(/the helper appears after a pause/i)).toBeInTheDocument();
+    expect(screen.getByText(/提示在停顿后出现/i)).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole("button", { name: /replay/i }));
+    fireEvent.click(screen.getByRole("button", { name: /重播/i }));
 
     expect(
-      screen.getByText(/the scene opens without foregrounding a label/i),
+      screen.getByText(/这个场景一开始并没有突出标签/i),
+    ).toBeInTheDocument();
+  });
+
+  it("switches to English and localizes the current demo shell and visible messages", () => {
+    render(
+      <LocaleProvider>
+        <DemoPage />
+      </LocaleProvider>,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: /switch to english/i }));
+
+    expect(
+      screen.getByRole("heading", { level: 1, name: /shared-interest icebreaker/i }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /replay/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /切换到中文/i })).toHaveTextContent("中文");
+
+    act(() => {
+      vi.advanceTimersByTime(1300);
+    });
+
+    expect(screen.getByText(/hey, hi!/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/the system notices a shared interest and keeps the cue lightweight/i),
     ).toBeInTheDocument();
   });
 
   it("switches to scene 02 and keeps annotation and playback content synchronized through replay", () => {
-    render(<DemoPage />);
+    render(
+      <LocaleProvider initialLocale="en">
+        <DemoPage />
+      </LocaleProvider>,
+    );
 
     fireEvent.click(screen.getByRole("button", { name: /next scene/i }));
 
@@ -74,7 +109,7 @@ describe("demo page", () => {
     ).toBeInTheDocument();
     expectActiveAnnotation(/a real-life moment creates the opening/i);
     expect(
-      screen.getByText(/救命！昨天赶了 5 个 DDL/i),
+      screen.getByText(/five deadlines last night/i),
     ).toBeInTheDocument();
     expect(
       screen.queryByText(/the assistant spots an opening around coping style/i),
@@ -99,7 +134,7 @@ describe("demo page", () => {
     ).toBeInTheDocument();
     expectActiveAnnotation(/a real-life moment creates the opening/i);
     expect(
-      screen.getByText(/救命！昨天赶了 5 个 DDL/i),
+      screen.getByText(/five deadlines last night/i),
     ).toBeInTheDocument();
     expect(
       screen.queryByText(/the assistant spots an opening around coping style/i),
@@ -107,7 +142,11 @@ describe("demo page", () => {
   });
 
   it("uses the direct scene switcher path and ignores stale autoplay callbacks after switching and replaying", () => {
-    render(<DemoPage />);
+    render(
+      <LocaleProvider initialLocale="en">
+        <DemoPage />
+      </LocaleProvider>,
+    );
 
     const staleSceneOneCallback = scheduledTimeoutCallbacks.at(-1);
 
@@ -117,7 +156,7 @@ describe("demo page", () => {
       screen.getByRole("heading", { level: 1, name: /ai-guided deeper cue/i }),
     ).toBeInTheDocument();
     expectActiveAnnotation(/a real-life moment creates the opening/i);
-    expect(screen.getByText(/救命！昨天赶了 5 个 DDL/i)).toBeInTheDocument();
+    expect(screen.getByText(/five deadlines last night/i)).toBeInTheDocument();
 
     act(() => {
       staleSceneOneCallback?.();
