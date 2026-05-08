@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
+import { cookies } from "next/headers";
 
 import { LocaleProvider } from "@/components/providers/LocaleProvider";
+import type { Locale } from "@/lib/types";
 
 import "./globals.css";
 
@@ -9,15 +11,22 @@ export const metadata: Metadata = {
   description: "Guided research demo from labels to understanding.",
 };
 
-export default function RootLayout({
+function resolveInitialLocale(localeCookie?: string): Locale {
+  return localeCookie === "en" ? "en" : "zh";
+}
+
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const cookieStore = await cookies();
+  const initialLocale = resolveInitialLocale(cookieStore.get("bridgechat-locale")?.value);
+
   return (
-    <html lang="zh-CN">
+    <html lang={initialLocale === "zh" ? "zh-CN" : "en"}>
       <body className="antialiased">
-        <LocaleProvider>{children}</LocaleProvider>
+        <LocaleProvider initialLocale={initialLocale}>{children}</LocaleProvider>
       </body>
     </html>
   );

@@ -4,6 +4,7 @@ import { createContext, useContext, useEffect, useState } from "react";
 
 import type { Locale } from "@/lib/types";
 
+const LOCALE_COOKIE_KEY = "bridgechat-locale";
 const LOCALE_STORAGE_KEY = "bridgechat-locale";
 
 type LocaleContextValue = {
@@ -13,21 +14,72 @@ type LocaleContextValue = {
 
 const LocaleContext = createContext<LocaleContextValue | null>(null);
 
-function readStoredLocale(): Locale {
-  if (typeof window === "undefined") {
+function readCookieLocale(): Locale | null {
+  if (typeof document === "undefined") {
+    return null;
+  }
+
+  const localeCookie = document.cookie
+    .split("; ")
+    .find((cookie) => cookie.startsWith(`${LOCALE_COOKIE_KEY}=`))
+    ?.split("=")[1];
+
+  if (localeCookie === "en") {
+    return "en";
+  }
+
+  if (localeCookie === "zh") {
     return "zh";
   }
 
-  const storedLocale = window.localStorage.getItem(LOCALE_STORAGE_KEY);
-
-  return storedLocale === "en" ? "en" : "zh";
+  return null;
 }
 
-export function LocaleProvider({ children }: { children: React.ReactNode }) {
-  const [locale, setLocale] = useState<Locale>(() => readStoredLocale());
+function readStoredLocale(initialLocale?: Locale): Locale {
+  if (typeof window === "undefined") {
+    return initialLocale ?? "zh";
+  }
+
+  if (initialLocale) {
+    return initialLocale;
+  }
+
+  const cookieLocale = readCookieLocale();
+
+  if (cookieLocale) {
+    return cookieLocale;
+  }
+
+  try {
+    const storedLocale = window.localStorage.getItem(LOCALE_STORAGE_KEY);
+
+    return storedLocale === "en" ? "en" : "zh";
+  } catch {
+    return initialLocale ?? "zh";
+  }
+}
+
+function persistLocale(locale: Locale) {
+  try {
+    window.localStorage.setItem(LOCALE_STORAGE_KEY, locale);
+  } catch {
+    // Ignore storage failures so locale state still works in restricted contexts.
+  }
+
+  document.cookie = `${LOCALE_COOKIE_KEY}=${locale}; path=/; max-age=31536000; samesite=lax`;
+}
+
+export function LocaleProvider({
+  children,
+  initialLocale,
+}: {
+  children: React.ReactNode;
+  initialLocale?: Locale;
+}) {
+  const [locale, setLocale] = useState<Locale>(() => readStoredLocale(initialLocale));
 
   useEffect(() => {
-    window.localStorage.setItem(LOCALE_STORAGE_KEY, locale);
+    persistLocale(locale);
     document.documentElement.lang = locale === "zh" ? "zh-CN" : "en";
   }, [locale]);
 
