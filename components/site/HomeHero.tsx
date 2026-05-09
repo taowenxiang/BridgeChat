@@ -38,7 +38,7 @@ export function HomeHero() {
 
         <div className="mt-8 flex flex-wrap gap-3">
           <Button asChild size="lg">
-            <Link href="/demo">
+            <Link href="/video">
               {copy.cta}
               <ArrowRight className="h-4 w-4" />
             </Link>

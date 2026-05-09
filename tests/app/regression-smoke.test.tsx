@@ -1,8 +1,8 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
-import DemoPage from "@/app/demo/page";
 import HomePage from "@/app/page";
+import VideoPage from "@/app/video/page";
 import { LocaleProvider } from "@/components/providers/LocaleProvider";
 
 describe("regression smoke", () => {
@@ -18,20 +18,23 @@ describe("regression smoke", () => {
     ).toBeInTheDocument();
     expect(
       screen.getByRole("link", { name: /enter guided demo/i }),
-    ).toHaveAttribute("href", "/demo");
+    ).toHaveAttribute("href", "/video");
     expect(screen.queryByText(/language/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/launch demo/i)).not.toBeInTheDocument();
 
     render(
       <LocaleProvider initialLocale="en">
-        <DemoPage />
+        <VideoPage />
       </LocaleProvider>,
     );
 
     expect(
-      screen.getByRole("heading", { level: 1, name: /shared-interest icebreaker/i }),
+      screen.getByRole("button", { name: /scene 1 共同爱好/i }),
     ).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /replay/i })).toBeInTheDocument();
+    expect(
+      screen.getByText(/小A 想聊点什么，但不知道突然提猫猫会不会尴尬。/i),
+    ).toBeInTheDocument();
     expect(screen.queryByText(/understand more/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/reset demo/i)).not.toBeInTheDocument();
   });
