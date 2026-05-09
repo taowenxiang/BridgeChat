@@ -1,5 +1,5 @@
-import { VideoShell } from "@/components/bridgechat/VideoShell";
+import { GuidedSceneShowcase } from "@/components/bridgechat/guided/GuidedSceneShowcase";
 
 export default function VideoPage() {
-  return <VideoShell />;
+  return <GuidedSceneShowcase />;
 }
