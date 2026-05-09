@@ -1,15 +1,15 @@
 @import "tailwindcss";
 
 :root {
-  --background: #f4f6f3;
-  --foreground: #142129;
-  --accent-strong: #2e6d64;
-  --accent-stronger: #1d5750;
-  --accent-soft: #87c8b6;
-  --accent-glow: #e4f6f0;
-  --border-soft: rgba(148, 163, 184, 0.16);
-  --border-strong: rgba(148, 163, 184, 0.3);
-  --panel-muted: rgba(243, 247, 246, 0.92);
+  --background: #f3f5f2;
+  --foreground: #11202a;
+  --accent-strong: #1f6b63;
+  --accent-stronger: #155149;
+  --accent-soft: #9ad0c1;
+  --accent-glow: #e7f5ef;
+  --border-soft: rgba(148, 163, 184, 0.14);
+  --border-strong: rgba(148, 163, 184, 0.28);
+  --panel-muted: rgba(244, 247, 246, 0.94);
 }
 
 * {
@@ -23,7 +23,8 @@ html {
 body {
   min-height: 100vh;
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.72), rgba(244, 246, 243, 0.96)),
+    radial-gradient(circle at top, rgba(231, 245, 239, 0.96), transparent 38%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.78), rgba(243, 245, 242, 0.98)),
     var(--background);
   color: var(--foreground);
   font-family: "Avenir Next", "PingFang SC", "Noto Sans SC", "Segoe UI", sans-serif;

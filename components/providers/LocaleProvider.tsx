@@ -1,50 +1,112 @@
 "use client";
 
-import {
-  createContext,
-  useContext,
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
+import { createContext, useContext, useEffect, useState } from "react";
 
 import type { Locale } from "@/lib/types";
+
+const LOCALE_COOKIE_KEY = "bridgechat-locale";
+const LOCALE_STORAGE_KEY = "bridgechat-locale";
 
 type LocaleContextValue = {
   locale: Locale;
   setLocale: (locale: Locale) => void;
-  toggleLocale: () => void;
 };
 
 const LocaleContext = createContext<LocaleContextValue | null>(null);
 
-export function LocaleProvider({ children }: { children: React.ReactNode }) {
-  const [locale, setLocale] = useState<Locale>("en");
+function readCookieLocale(): Locale | null {
+  if (typeof document === "undefined") {
+    return null;
+  }
 
-  useEffect(() => {
-    const stored = window.localStorage.getItem("bridgechat-locale");
-    if (stored === "en" || stored === "zh") {
-      setLocale(stored);
+  const localeCookie = document.cookie
+    .split("; ")
+    .find((cookie) => cookie.startsWith(`${LOCALE_COOKIE_KEY}=`))
+    ?.split("=")[1];
+
+  if (localeCookie === "en") {
+    return "en";
+  }
+
+  if (localeCookie === "zh") {
+    return "zh";
+  }
+
+  return null;
+}
+
+function readPersistedLocale(): Locale | null {
+  const cookieLocale = readCookieLocale();
+
+  if (cookieLocale) {
+    return cookieLocale;
+  }
+
+  try {
+    const storedLocale = window.localStorage.getItem(LOCALE_STORAGE_KEY);
+
+    if (storedLocale === "en") {
+      return "en";
     }
-  }, []);
+
+    if (storedLocale === "zh") {
+      return "zh";
+    }
+
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+function persistLocale(locale: Locale) {
+  try {
+    window.localStorage.setItem(LOCALE_STORAGE_KEY, locale);
+  } catch {
+    // Ignore storage failures so locale state still works in restricted contexts.
+  }
+
+  document.cookie = `${LOCALE_COOKIE_KEY}=${locale}; path=/; max-age=31536000; samesite=lax`;
+}
+
+export function LocaleProvider({
+  children,
+  initialLocale,
+}: {
+  children: React.ReactNode;
+  initialLocale?: Locale;
+}) {
+  const [locale, setLocale] = useState<Locale>(initialLocale ?? "zh");
+  const [isClientLocaleReady, setIsClientLocaleReady] = useState(initialLocale !== undefined);
 
   useEffect(() => {
-    window.localStorage.setItem("bridgechat-locale", locale);
-    document.documentElement.lang = locale === "zh" ? "zh-CN" : "en";
-  }, [locale]);
+    if (initialLocale !== undefined) {
+      return;
+    }
 
-  const value = useMemo(
-    () => ({
-      locale,
-      setLocale,
-      toggleLocale: () =>
-        setLocale((current) => (current === "en" ? "zh" : "en")),
-    }),
-    [locale],
-  );
+    const persistedLocale = readPersistedLocale();
+
+    if (persistedLocale) {
+      setLocale(persistedLocale);
+    }
+
+    setIsClientLocaleReady(true);
+  }, [initialLocale]);
+
+  useEffect(() => {
+    document.documentElement.lang = locale === "zh" ? "zh-CN" : "en";
+
+    if (!isClientLocaleReady) {
+      return;
+    }
+
+    persistLocale(locale);
+  }, [isClientLocaleReady, locale]);
 
   return (
-    <LocaleContext.Provider value={value}>{children}</LocaleContext.Provider>
+    <LocaleContext.Provider value={{ locale, setLocale }}>
+      {children}
+    </LocaleContext.Provider>
   );
 }
 
@@ -52,7 +114,7 @@ export function useLocale() {
   const context = useContext(LocaleContext);
 
   if (!context) {
-    throw new Error("useLocale must be used within a LocaleProvider.");
+    throw new Error("useLocale must be used within a LocaleProvider");
   }
 
   return context;
