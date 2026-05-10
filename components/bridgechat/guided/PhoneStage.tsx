@@ -17,7 +17,7 @@ export function PhoneStage({
     : null;
 
   return (
-    <section className="flex justify-center xl:justify-end">
+    <section aria-label="Phone demo stage" className="flex justify-center xl:justify-end">
       <div className="w-full max-w-[370px] rounded-[42px] border border-slate-300/70 bg-[linear-gradient(180deg,rgba(254,254,255,0.96),rgba(239,244,248,0.94))] p-3 shadow-[0_30px_70px_rgba(15,23,42,0.14)]">
         <div className="relative overflow-hidden rounded-[32px] border border-slate-200/80 bg-[#eef2f5]">
           <div className="flex items-center justify-between border-b border-slate-200/70 bg-white/84 px-5 py-4">

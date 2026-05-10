@@ -29,11 +29,16 @@ describe("regression smoke", () => {
     );
 
     expect(
-      screen.getByRole("button", { name: /scene 1 共同爱好/i }),
+      screen.getByRole("region", { name: /video demo controls/i }),
     ).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /replay/i })).toBeInTheDocument();
     expect(
-      screen.getByText(/小A 想聊点什么，但不知道突然提猫猫会不会尴尬。/i),
+      screen.getByRole("tab", { name: /scene 1/i }),
+    ).toHaveAttribute("aria-selected", "true");
+    expect(
+      screen.getByRole("button", { name: /replay current scene/i }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("region", { name: /phone demo stage/i }),
     ).toBeInTheDocument();
     expect(screen.queryByText(/understand more/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/reset demo/i)).not.toBeInTheDocument();
