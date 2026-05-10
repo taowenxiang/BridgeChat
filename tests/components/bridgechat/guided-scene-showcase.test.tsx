@@ -1,7 +1,11 @@
-import { act, render, screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { act, cleanup, render, screen } from "@testing-library/react";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { GuidedSceneShowcase } from "@/components/bridgechat/guided/GuidedSceneShowcase";
+
+afterEach(() => {
+  cleanup();
+});
 
 describe("GuidedSceneShowcase", () => {
   it("renders a timeline and advances the current beat as autoplay moves forward", () => {
@@ -28,5 +32,17 @@ describe("GuidedSceneShowcase", () => {
     ).toHaveAttribute("data-state", "complete");
 
     vi.useRealTimers();
+  });
+
+  it("renders the phone stage inside a portrait hero frame", () => {
+    render(<GuidedSceneShowcase />);
+
+    expect(
+      screen.getByRole("region", { name: /phone demo stage/i }),
+    ).toBeInTheDocument();
+
+    const frame = screen.getByTestId("hero-phone-frame");
+    expect(frame.className).toContain("aspect-[9/19.5]");
+    expect(frame.className).toContain("max-w-[420px]");
   });
 });
