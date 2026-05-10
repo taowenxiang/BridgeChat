@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 
+import { AnnotationTimeline } from "@/components/bridgechat/guided/AnnotationTimeline";
 import { ControlDeck } from "@/components/bridgechat/guided/ControlDeck";
 import { PhoneStage } from "@/components/bridgechat/guided/PhoneStage";
 import type { GuidedSceneId } from "@/lib/guided-scene-data";
@@ -72,7 +73,13 @@ export function GuidedSceneShowcase() {
         />
 
         <div className="grid gap-6 xl:grid-cols-[minmax(280px,0.82fr)_minmax(420px,1.18fr)] xl:items-start">
-          <div data-testid="annotation-column" className="order-2 xl:order-1" />
+          <div data-testid="annotation-column" className="order-2 xl:order-1">
+            <AnnotationTimeline
+              scene={scene}
+              activeBeatIndex={playback.activeBeatIndex}
+              snapshot={snapshot}
+            />
+          </div>
           <div data-testid="phone-column" className="order-1 xl:order-2">
             <PhoneStage scene={scene} snapshot={snapshot} />
           </div>

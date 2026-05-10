@@ -4,30 +4,28 @@ import { describe, expect, it, vi } from "vitest";
 import { GuidedSceneShowcase } from "@/components/bridgechat/guided/GuidedSceneShowcase";
 
 describe("GuidedSceneShowcase", () => {
-  it("autoplays Scene 1 and delays the hesitation annotation until after the typing beat", () => {
+  it("renders a timeline and advances the current beat as autoplay moves forward", () => {
     vi.useFakeTimers();
 
     render(<GuidedSceneShowcase />);
 
     expect(
-      screen.getByText("小A 想聊点什么，但不知道突然提猫猫会不会尴尬。"),
+      screen.getByRole("list", { name: /scene timeline/i }),
     ).toBeInTheDocument();
+    expect(
+      screen.getByRole("listitem", { name: /beat 1/i }),
+    ).toHaveAttribute("data-state", "current");
 
     act(() => {
-      vi.advanceTimersByTime(2600);
+      vi.advanceTimersByTime(3600);
     });
 
     expect(
-      screen.queryByText("不知道自己想的话题，对方是否感兴趣？"),
-    ).not.toBeInTheDocument();
-
-    act(() => {
-      vi.advanceTimersByTime(1200);
-    });
-
+      screen.getByRole("listitem", { name: /beat 3/i }),
+    ).toHaveAttribute("data-state", "current");
     expect(
-      screen.getByText("不知道自己想的话题，对方是否感兴趣？"),
-    ).toBeInTheDocument();
+      screen.getByRole("listitem", { name: /beat 1/i }),
+    ).toHaveAttribute("data-state", "complete");
 
     vi.useRealTimers();
   });
