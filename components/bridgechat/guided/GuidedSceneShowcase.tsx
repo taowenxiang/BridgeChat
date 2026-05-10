@@ -72,7 +72,10 @@ export function GuidedSceneShowcase() {
           onReplay={replayScene}
         />
 
-        <div className="grid gap-6 xl:grid-cols-[minmax(280px,0.82fr)_minmax(420px,1.18fr)] xl:items-start">
+        <div
+          data-testid="video-main-grid"
+          className="grid gap-6 xl:grid-cols-[minmax(280px,0.78fr)_minmax(420px,1.22fr)] xl:items-start"
+        >
           <div data-testid="annotation-column" className="order-2 xl:order-1">
             <AnnotationTimeline
               scene={scene}

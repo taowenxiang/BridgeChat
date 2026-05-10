@@ -40,6 +40,9 @@ describe("regression smoke", () => {
     expect(
       screen.getByRole("region", { name: /phone demo stage/i }),
     ).toBeInTheDocument();
+    expect(
+      screen.getByRole("list", { name: /scene timeline/i }),
+    ).toBeInTheDocument();
     expect(screen.queryByText(/understand more/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/reset demo/i)).not.toBeInTheDocument();
   });

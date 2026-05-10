@@ -45,4 +45,35 @@ describe("GuidedSceneShowcase", () => {
     expect(frame.className).toContain("aspect-[9/19.5]");
     expect(frame.className).toContain("max-w-[420px]");
   });
+
+  it("keeps the phone ahead of the timeline in mobile order classes and lets the deck drive scene replay", () => {
+    vi.useFakeTimers();
+
+    render(<GuidedSceneShowcase />);
+
+    expect(screen.getByTestId("video-main-grid").className).toContain(
+      "xl:grid-cols-[minmax(280px,0.78fr)_minmax(420px,1.22fr)]",
+    );
+    expect(screen.getByTestId("phone-column").className).toContain("order-1");
+    expect(screen.getByTestId("annotation-column").className).toContain("order-2");
+
+    act(() => {
+      screen.getByRole("tab", { name: /scene 2/i }).click();
+    });
+    expect(
+      screen.getByRole("heading", { level: 1, name: /scene 2/i }),
+    ).toBeInTheDocument();
+
+    screen.getByRole("button", { name: /replay current scene/i }).click();
+
+    act(() => {
+      vi.advanceTimersByTime(1000);
+    });
+
+    expect(
+      screen.getByRole("listitem", { name: /beat 2/i }),
+    ).toHaveAttribute("data-state", "current");
+
+    vi.useRealTimers();
+  });
 });
